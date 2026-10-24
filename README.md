@@ -9,7 +9,7 @@ Unreel stops the **YouTube Shorts** and **Instagram Reels** feeds without blocki
 | Device | What to download | Needs |
 |---|---|---|
 | **Android** | [`Unreel.apk`](../../releases/latest), the app | Android 8.0 or later. Doesn't use the internet |
-| **iPhone, iPad, Mac** | [`unreel.user.js`](../../releases/latest/download/unreel.user.js), a script for Safari | The free [Userscripts](https://apps.apple.com/app/id1463298887) app. [Setup steps](#iphone-and-ipad) |
+| **iPhone, iPad, Mac** | [`unreel.user.js`](../../raw/HEAD/iphone/unreel.user.js), a script for Safari | The free [Userscripts](https://apps.apple.com/app/id1463298887) app. [Setup steps](#iphone-and-ipad) |
 
 > Unreel isn't affiliated with YouTube, Google, Instagram or Meta.
 
@@ -125,7 +125,7 @@ iOS doesn't let apps look inside other apps, so no iPhone app can block just the
 
 1. Install **[Userscripts](https://apps.apple.com/app/id1463298887)** from the App Store. It's free and open source, needs iOS 15 or later, and runs small scripts in Safari. Open it once.
 2. Go to **Settings → Apps → Safari → Extensions → Userscripts** and turn on **Allow Extension**. Under permissions, choose **All Websites → Allow**. On iOS 17 or earlier, the path is **Settings → Safari → Extensions**.
-3. In Safari, open **[unreel.user.js](../../releases/latest/download/unreel.user.js)**. Tap the **AA** (or puzzle-piece) button in the address bar, choose **Userscripts**, then **Install**.
+3. In Safari, open **[unreel.user.js](../../raw/HEAD/iphone/unreel.user.js)**. Tap the **AA** (or puzzle-piece) button in the address bar, choose **Userscripts**, then **Install**.
 4. Open **youtube.com** or **instagram.com** in Safari. The Shorts tab, Shorts shelves and the Reels tab are gone.
    - A Short someone sends you opens as a normal video.
    - A Reel someone sends you opens as a normal post.
@@ -179,6 +179,14 @@ The **Android APK** GitHub Actions workflow builds it too. That APK is signed wi
 1. Run a debug build and open the screen that isn't caught.
 2. Run `adb logcat -s UnreelDiag`. It prints the view IDs on screens that nothing matched.
 3. Add the new ID to `unreel_rules.json` and raise `version`.
+
+**Publishing a release.** The README's download and issue links are relative (`../../releases/latest`, `../../raw/HEAD/…`, `../../issues`). They work in any GitHub repository without editing, as long as:
+- `README.md` stays at the top of the repository;
+- each release is published, not saved as a draft or marked as a pre-release ("latest" skips both), and has `Unreel.apk` attached with exactly that name;
+- `iphone/unreel.user.js` stays at that path. iPhone users install it straight from the repository, because Safari saves release attachments as downloads instead of letting Userscripts install them;
+- Issues stay turned on (**Settings → General → Features → Issues**).
+
+These links only work on github.com, not when you open `README.md` on your computer.
 
 ## Licences
 
