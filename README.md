@@ -111,7 +111,7 @@ Menus differ slightly between phones. If you see something else:
 
 **Checking your download.** Release APKs are signed with this certificate, SHA-256:
 ```
-8afa5f17d2c27f0fe56c5cc94de8ac4dda2e7706274a57b54bf061517c8ae412
+620e999dd9e6ef6843e136eb524ae261d95bec3f2d0e720a536048d2ec97fc57
 ```
 Compare it with `apksigner verify --print-certs Unreel.apk` (part of Android's build tools).
 
@@ -125,7 +125,7 @@ iOS doesn't let apps look inside other apps, so no iPhone app can block just the
 
 1. Install **[Userscripts](https://apps.apple.com/app/id1463298887)** from the App Store. It's free and open source, needs iOS 15 or later, and runs small scripts in Safari. Open it once.
 2. Go to **Settings → Apps → Safari → Extensions → Userscripts** and turn on **Allow Extension**. Under permissions, choose **All Websites → Allow**. On iOS 17 or earlier, the path is **Settings → Safari → Extensions**.
-3. In Safari, open **[unreel.user.js](../../raw/HEAD/iphone/unreel.user.js)**. Tap the **AA** (or puzzle-piece) button in the address bar, choose **Userscripts**, then **Install**.
+3. In Safari, open **[unreel.user.js](../../raw/HEAD/iphone/unreel.user.js)**. It opens as a page of code; that's normal, nothing downloads. Tap the **AA** (or puzzle-piece) button in the address bar, choose **Userscripts**, then **Install**.
 4. Open **youtube.com** or **instagram.com** in Safari. The Shorts tab, Shorts shelves and the Reels tab are gone.
    - A Short someone sends you opens as a normal video.
    - A Reel someone sends you opens as a normal post.
@@ -136,7 +136,7 @@ iOS doesn't let apps look inside other apps, so no iPhone app can block just the
 - **Put the websites on your Home Screen:** open each site in Safari, tap **Share → Add to Home Screen**. They then open like apps.
 - **Or keep the apps but lock them:** go to **Settings → Screen Time → App Limits**, add YouTube and Instagram with a 1-minute limit, and ask a friend to set the Screen Time passcode.
 
-**Also on Mac and other browsers.** Userscripts works in Safari on macOS 12 or later. In Chrome, Firefox or Edge on a computer, install the script with [Violentmonkey](https://violentmonkey.github.io) or Tampermonkey.
+**Also on Mac and other browsers.** Userscripts works in Safari on macOS 12 or later. In Chrome, Firefox or Edge on a computer, install [Violentmonkey](https://violentmonkey.github.io) or Tampermonkey, then open the [unreel.user.js](../../raw/HEAD/iphone/unreel.user.js) link; it offers to install the script.
 
 **If Shorts or Reels come back,** YouTube or Instagram changed their website. [Open an issue](../../issues), and update the script once a fix is released.
 
