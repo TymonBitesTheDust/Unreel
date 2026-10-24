@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Standalone native Android build of Unreel: the same blocker service as the Expo app
+  (modules/unreel-blocker/android), with a framework-only dashboard instead of React Native.
+  Built by native-android/build-apk.sh without Gradle or the Android SDK manager.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  package="com.unreel.app">
+
+  <queries>
+    <package android:name="com.google.android.youtube" />
+    <package android:name="com.instagram.android" />
+  </queries>
+
+  <application
+    android:allowBackup="false"
+    android:icon="@mipmap/ic_launcher"
+    android:label="Unreel"
+    android:supportsRtl="true"
+    android:theme="@style/Unreel">
+
+    <activity
+      android:name="com.unreel.app.lite.MainActivity"
+      android:exported="true"
+      android:launchMode="singleTask"
+      android:windowSoftInputMode="adjustResize">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+
+    <service
+      android:name="expo.modules.unreelblocker.service.ShortFormBlockerService"
+      android:exported="false"
+      android:label="@string/unreel_accessibility_label"
+      android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+      <intent-filter>
+        <action android:name="android.accessibilityservice.AccessibilityService" />
+      </intent-filter>
+      <meta-data
+        android:name="android.accessibilityservice"
+        android:resource="@xml/unreel_accessibility_service" />
+    </service>
+  </application>
+</manifest>

@@ -1,0 +1,28 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <application>
+    <!--
+      The short-form blocker. Only the system can bind it (BIND_ACCESSIBILITY_SERVICE),
+      and the user must switch it on in Settings > Accessibility. It only receives events
+      from the packages listed in res/xml/unreel_accessibility_service.xml.
+    -->
+    <service
+      android:name="expo.modules.unreelblocker.service.ShortFormBlockerService"
+      android:exported="false"
+      android:label="@string/unreel_accessibility_label"
+      android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+      <intent-filter>
+        <action android:name="android.accessibilityservice.AccessibilityService" />
+      </intent-filter>
+      <meta-data
+        android:name="android.accessibilityservice"
+        android:resource="@xml/unreel_accessibility_service" />
+    </service>
+  </application>
+
+  <!-- Lets the dashboard check whether YouTube / Instagram are installed (Android 11+ package visibility). -->
+  <queries>
+    <package android:name="com.google.android.youtube" />
+    <package android:name="com.instagram.android" />
+  </queries>
+</manifest>

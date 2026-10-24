@@ -1,0 +1,10 @@
+{
+  "extension_name": {
+    "message": "Unreel",
+    "description": "The display name for the extension."
+  },
+  "extension_description": {
+    "message": "Removes YouTube Shorts and Instagram Reels in Safari. Everything else keeps working.",
+    "description": "Description of what the extension does."
+  }
+}

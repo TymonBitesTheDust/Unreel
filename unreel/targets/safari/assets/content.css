@@ -1,0 +1,32 @@
+/*
+ * Hides the entry points into Shorts and Reels. Selectors target both desktop (ytd-*) and the
+ * mobile site Safari on iPhone actually gets (m.youtube.com, ytm-*). Like the Android view IDs,
+ * these break when the sites redesign — keep them in one place and re-check after updates.
+ */
+
+/* ---- YouTube: Shorts shelves, cards and nav ---- */
+ytd-reel-shelf-renderer,
+ytd-rich-shelf-renderer[is-shorts],
+ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+ytd-video-renderer:has(a[href^="/shorts/"]),
+ytd-grid-video-renderer:has(a[href^="/shorts/"]),
+ytd-guide-entry-renderer:has(a[title="Shorts"]),
+ytd-mini-guide-entry-renderer[aria-label="Shorts"],
+grid-shelf-view-model:has(a[href^="/shorts/"]),
+ytm-reel-shelf-renderer,
+ytm-shorts-lockup-view-model,
+ytm-shorts-lockup-view-model-v2,
+ytm-rich-section-renderer:has(ytm-reel-shelf-renderer),
+ytm-rich-section-renderer:has(a[href^="/shorts/"]),
+ytm-video-with-context-renderer:has(a[href^="/shorts/"]),
+ytm-pivot-bar-item-renderer:has(.pivot-shorts),
+yt-tab-shape[tab-title="Shorts"] {
+  display: none !important;
+}
+
+/* ---- Instagram: Reels nav and profile tab ---- */
+a[href="/reels/"],
+a[href$="/reels/"][role="tab"],
+a[href^="/reels/"] {
+  display: none !important;
+}

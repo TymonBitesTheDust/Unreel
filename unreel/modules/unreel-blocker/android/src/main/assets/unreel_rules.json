@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "version": 2026102401,
+  "notes": "Bundled detection rules. A newer copy can be pushed at runtime with UnreelBlocker.updateRules(json) so view-ID changes in YouTube/Instagram don't need an app release. IDs verified against public open-source blockers maintained through Sept 2026; re-verify with the debug 'dump view IDs' log after each target-app update. Tab labels are only a fallback (IDs come first) and are matched together with the selected state; add translations for your users' locales here.",
+  "targets": [
+    {
+      "id": "youtube_shorts",
+      "app": "youtube",
+      "feature": "shorts",
+      "label": "YouTube Shorts",
+      "configKey": "youtubeShorts",
+      "packageNames": [
+        "com.google.android.youtube"
+      ],
+      "feedTab": {
+        "viewIds": [],
+        "labels": [
+          "Shorts",
+          "ショート"
+        ]
+      },
+      "playerViewIds": [
+        "com.google.android.youtube:id/reel_player_page_container",
+        "com.google.android.youtube:id/reel_recycler",
+        "com.google.android.youtube:id/reel_progress_bar"
+      ],
+      "swipeViewIds": [
+        "com.google.android.youtube:id/reel_recycler"
+      ],
+      "excludeViewIds": [],
+      "exitTab": {
+        "viewIds": [],
+        "labels": [
+          "Home"
+        ]
+      }
+    },
+    {
+      "id": "instagram_reels",
+      "app": "instagram",
+      "feature": "reels",
+      "label": "Instagram Reels",
+      "configKey": "instagramReels",
+      "packageNames": [
+        "com.instagram.android"
+      ],
+      "feedTab": {
+        "viewIds": [
+          "com.instagram.android:id/clips_tab"
+        ],
+        "labels": [
+          "Reels",
+          "リール",
+          "릴스"
+        ]
+      },
+      "playerViewIds": [
+        "com.instagram.android:id/clips_viewer_view_pager",
+        "com.instagram.android:id/clips_video_container",
+        "com.instagram.android:id/clips_media_component"
+      ],
+      "swipeViewIds": [
+        "com.instagram.android:id/clips_viewer_view_pager"
+      ],
+      "excludeViewIds": [
+        "com.instagram.android:id/reel_viewer_container",
+        "com.instagram.android:id/story_viewer_container"
+      ],
+      "exitTab": {
+        "viewIds": [
+          "com.instagram.android:id/feed_tab"
+        ],
+        "labels": [
+          "Home"
+        ]
+      }
+    }
+  ]
+}

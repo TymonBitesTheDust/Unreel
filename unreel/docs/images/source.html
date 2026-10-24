@@ -1,0 +1,389 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: Barlow; font-weight: 600; src: url('../../node_modules/@expo-google-fonts/barlow-condensed/600SemiBold/BarlowCondensed_600SemiBold.ttf'); }
+  @font-face { font-family: Barlow; font-weight: 700; src: url('../../node_modules/@expo-google-fonts/barlow-condensed/700Bold/BarlowCondensed_700Bold.ttf'); }
+  :root {
+    --bg: #EDEFF3; --surface: #FFFFFF; --ink: #10162F; --muted: #5A6075; --line: #D5D9E2;
+    --brand: #2B3BD6; --onbrand-muted: #C9CEF7; --signal: #FFB020; --ok: #1E8E5A; --danger: #C23A22;
+    --sys: #F4F5F8; --sys-ink: #1B1C20; --sys-muted: #6A6D75; --sys-accent: #3E6CE0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #fff; font-family: Inter, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .shot { width: 880px; padding: 36px 32px; background: var(--bg); position: relative; overflow: hidden; }
+  .shot + .shot { margin-top: 40px; }
+  .display { font-family: Barlow; font-weight: 700; }
+
+  /* ---------- phone frame ---------- */
+  .phone { width: 236px; height: 486px; border-radius: 34px; background: #0B0E1C; padding: 8px; flex: none;
+           box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 18px 40px -18px rgba(16,22,47,.45); }
+  .screen { width: 100%; height: 100%; border-radius: 27px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+  .status { height: 22px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 9px; font-weight: 600; flex: none; }
+  .status .dots { display: flex; gap: 3px; } .status .dots i { width: 9px; height: 6px; border-radius: 1.5px; background: currentColor; opacity: .75; display: block; }
+
+  /* ---------- Unreel dashboard ---------- */
+  .ur { background: var(--bg); color: var(--ink); }
+  .ur .body { padding: 6px 12px 0; display: flex; flex-direction: column; gap: 10px; }
+  .ur h1 { font-family: Barlow; font-weight: 700; font-size: 22px; line-height: 1; }
+  .hero { background: var(--brand); color: #fff; border-radius: 18px; padding: 13px; display: flex; flex-direction: column; gap: 8px; }
+  .hero .top { display: flex; align-items: center; gap: 8px; }
+  .hero .t1 { font-size: 10.5px; font-weight: 700; } .hero .t2 { font-size: 8.5px; color: var(--onbrand-muted); margin-top: 1px; }
+  .sw { width: 26px; height: 15px; border-radius: 8px; background: var(--signal); position: relative; flex: none; }
+  .sw::after { content: ''; position: absolute; width: 11px; height: 11px; border-radius: 50%; background: #fff; top: 2px; right: 2px; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .sw.brand { background: var(--brand); } .sw.off { background: #C9CDD6; } .sw.off::after { right: auto; left: 2px; }
+  .sw.sys { background: var(--sys-accent); }
+  .count { display: flex; align-items: flex-end; gap: 7px; }
+  .count b { font-family: Barlow; font-weight: 700; font-size: 54px; line-height: .8; }
+  .count span { font-size: 9px; color: var(--onbrand-muted); line-height: 1.25; padding-bottom: 2px; }
+  .frames { display: flex; flex-wrap: wrap; gap: 3.5px; }
+  .frame { width: 7px; height: 12.25px; border: 1.2px solid var(--onbrand-muted); border-radius: 1.6px; position: relative; overflow: hidden; }
+  .frame::after { content: ''; position: absolute; width: 16px; height: 1.6px; background: var(--signal); left: -4.5px; top: 4.5px; transform: rotate(-60deg); }
+  .split { display: flex; } .split div { flex: 1; } .split b { font-family: Barlow; font-weight: 600; font-size: 16px; display: block; line-height: 1.1; } .split span { font-size: 8px; color: var(--onbrand-muted); }
+  .ur h2 { font-family: Barlow; font-weight: 600; font-size: 15px; line-height: 1; margin: 2px 0 -3px 2px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .bars { display: flex; justify-content: space-between; align-items: flex-end; padding: 8px 10px 6px; height: 74px; }
+  .bars div { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 7px; color: var(--muted); }
+  .bars i { width: 8px; border-radius: 3px; background: var(--ink); opacity: .2; display: block; }
+  .bars .today i { background: var(--brand); opacity: 1; } .bars .today { color: var(--ink); font-weight: 700; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; font-size: 9.5px; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row small { display: block; font-size: 7.5px; color: var(--muted); margin-top: 1px; }
+
+  /* ---------- generic video app ---------- */
+  .va { background: #0F0F12; color: #fff; }
+  .va.light { background: #FFFFFF; color: #111; }
+  .vid { flex: 1; position: relative; background: linear-gradient(160deg, #3D2A6E 0%, #B5446E 55%, #F2A541 100%); }
+  .vid .side { position: absolute; right: 9px; bottom: 26px; display: flex; flex-direction: column; gap: 12px; }
+  .vid .side i { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.22); display: block; }
+  .vid .cap { position: absolute; left: 12px; bottom: 22px; right: 46px; }
+  .vid .cap i { display: block; height: 6px; border-radius: 3px; background: rgba(255,255,255,.7); margin-top: 5px; }
+  .vid .swipe { position: absolute; left: 50%; top: 42%; transform: translateX(-50%); font-size: 9px; color: rgba(255,255,255,.85); text-align: center; }
+  .vid .swipe b { display: block; font-size: 20px; line-height: 1; }
+  .nav { height: 40px; display: flex; justify-content: space-around; align-items: center; font-size: 7.5px; flex: none; border-top: 1px solid rgba(127,127,127,.25); }
+  .nav span { display: flex; flex-direction: column; align-items: center; gap: 3px; opacity: .6; }
+  .nav span::before { content: ''; width: 14px; height: 10px; border-radius: 3px; border: 1.5px solid currentColor; }
+  .nav span.on { opacity: 1; font-weight: 700; } .nav span.on::before { background: currentColor; }
+  .feed { flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  .feed .thumb { height: 104px; border-radius: 10px; background: linear-gradient(135deg, #CFE3F7, #8FB4E8); }
+  .feed .thumb.b { background: linear-gradient(135deg, #F6D9B8, #E79C6A); }
+  .feed .meta i { display: block; height: 6px; border-radius: 3px; background: #D9DBE0; margin-top: 5px; }
+  .feed .meta i:first-child { width: 85%; background: #B7BAC2; } .feed .meta i:last-child { width: 55%; }
+  .chips { display: flex; gap: 5px; padding: 4px 10px 0; font-size: 7.5px; flex: none; }
+  .chips span { padding: 4px 7px; border-radius: 6px; background: #EEF0F3; } .chips span:first-child { background: #111; color: #fff; }
+
+  /* ---------- pause card (BlockOverlay) ---------- */
+  .pause { background: var(--brand); color: #fff; align-items: center; justify-content: center; text-align: center; padding: 0 20px; }
+  .pause .t { font-family: Inter; font-weight: 700; font-size: 18px; margin-top: 36px; }
+  .pause .b { font-size: 10px; color: var(--onbrand-muted); margin-top: 8px; line-height: 1.35; }
+  .pause .c { font-size: 9.5px; color: var(--signal); font-weight: 700; margin: 18px 0; }
+  .pause .btn { background: #fff; color: var(--brand); font-size: 9.5px; font-weight: 700; padding: 9px 14px; border-radius: 16px; }
+
+  /* ---------- system settings screens ---------- */
+  .sys { background: var(--sys); color: var(--sys-ink); }
+  .sys .hd { padding: 8px 14px 10px; display: flex; align-items: center; justify-content: space-between; }
+  .sys .hd b { font-size: 16px; font-weight: 600; }
+  .sys .hd .kebab { display: flex; flex-direction: column; gap: 2px; padding: 3px 6px; border-radius: 10px; }
+  .sys .hd .kebab i { width: 3px; height: 3px; border-radius: 50%; background: var(--sys-ink); display: block; }
+  .sys .grp { background: #fff; border-radius: 14px; margin: 0 10px 10px; overflow: hidden; }
+  .sys .it { padding: 10px 12px; font-size: 9.5px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sys .it + .it { border-top: 1px solid #ECEDF0; }
+  .sys .it small { display: block; font-size: 7.5px; color: var(--sys-muted); margin-top: 2px; }
+  .sys .it.dim { color: #A3A6AD; }
+  .sys .cap { font-size: 8px; color: var(--sys-muted); padding: 0 16px 6px; }
+  .appicon { width: 22px; height: 22px; border-radius: 6px; background: var(--brand); position: relative; flex: none; }
+  .appicon::before { content: ''; position: absolute; left: 7.5px; top: 4.5px; width: 7px; height: 12.5px; border: 1.4px solid #fff; border-radius: 1.6px; box-sizing: border-box; }
+  .appicon::after { content: ''; position: absolute; left: 7.4px; top: 10.2px; width: 8.5px; height: 1.4px; background: var(--signal); transform: rotate(-60deg); }
+  .appinfo { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0 14px; font-size: 13px; font-weight: 600; }
+  .appinfo .appicon { width: 44px; height: 44px; border-radius: 12px; }
+  .appinfo .appicon::before { left: 15px; top: 9px; width: 14px; height: 25px; border-width: 2.4px; border-radius: 3px; }
+  .appinfo .appicon::after { left: 14.5px; top: 20.5px; width: 17px; height: 2.6px; }
+  .scrim { position: absolute; inset: 0; background: rgba(10,12,20,.45); display: flex; align-items: flex-end; padding: 10px; }
+  .dialog { background: #fff; border-radius: 18px; padding: 14px; width: 100%; font-size: 9px; color: var(--sys-muted); line-height: 1.4; }
+  .dialog b { display: block; color: var(--sys-ink); font-size: 12px; margin-bottom: 6px; }
+  .dialog .acts { display: flex; justify-content: flex-end; gap: 14px; margin-top: 12px; font-weight: 700; color: var(--sys-accent); font-size: 9.5px; }
+  .dialog .acts span.solid { background: var(--sys-accent); color: #fff; padding: 6px 12px; border-radius: 12px; }
+  .menu { position: absolute; top: 46px; right: 10px; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.18); font-size: 9.5px; overflow: hidden; }
+  .menu div { padding: 10px 14px; white-space: nowrap; } .menu div + div { border-top: 1px solid #ECEDF0; }
+  .hl { outline: 2.5px solid var(--signal); outline-offset: -2.5px; border-radius: 10px; background: #FFF6E0 !important; }
+  .ring { outline: 3px solid var(--signal); outline-offset: 2px; border-radius: 12px; }
+  .tap { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: rgba(255,176,32,.35); border: 2px solid var(--signal); pointer-events: none; }
+
+  .shield { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 18px; text-align: center; gap: 8px; }
+  .shield .ic { width: 40px; height: 40px; border-radius: 50%; background: #E9EEFB; display: grid; place-items: center; }
+  .shield .ic::before { content: ''; width: 16px; height: 19px; border: 2.5px solid var(--sys-accent); border-radius: 4px 4px 8px 8px; }
+  .shield b { font-size: 13px; color: var(--sys-ink); } .shield p { font-size: 8.5px; color: var(--sys-muted); line-height: 1.4; }
+  .shield .acts { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 10px; font-size: 9.5px; font-weight: 700; }
+  .shield .acts span { padding: 8px; border-radius: 14px; } .shield .acts .p { background: var(--sys-accent); color: #fff; } .shield .acts .q { color: var(--sys-accent); }
+
+
+  /* ---------- iOS-style screens ---------- */
+  .ios { background: #F2F2F7; color: #111; }
+  .ios .bar { padding: 4px 14px 10px; font-size: 17px; font-weight: 700; }
+  .ios .back { padding: 2px 14px 0; font-size: 9px; color: #0A66E8; }
+  .ios .grp { background: #fff; border-radius: 12px; margin: 0 12px 12px; overflow: hidden; }
+  .ios .it { padding: 9px 12px; font-size: 9.5px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .ios .it + .it { border-top: 1px solid #E5E5EA; }
+  .ios .it small { display: block; font-size: 7.5px; color: #8A8A8E; margin-top: 2px; }
+  .ios .hint { font-size: 7.5px; color: #8A8A8E; padding: 0 22px 8px; line-height: 1.35; }
+  .sw.ios-on { background: #34C759; }
+  .codeicon { width: 46px; height: 46px; border-radius: 11px; background: linear-gradient(160deg, #3B3F4A, #16181D); color: #fff; font: 700 15px/46px ui-monospace, monospace; text-align: center; flex: none; }
+  .store { padding: 8px 14px; display: flex; gap: 10px; align-items: center; }
+  .store .get { flex: none; background: #0A66E8; color: #fff; font-size: 9.5px; font-weight: 700; padding: 5px 14px; border-radius: 12px; }
+  .urlbar { margin: 0 10px 8px; background: #E3E3E8; border-radius: 10px; padding: 7px 10px; font-size: 8.5px; color: #333; display: flex; justify-content: space-between; }
+  .codefile { margin: 0 10px; font: 7px/1.5 ui-monospace, monospace; color: #555; white-space: pre; overflow: hidden; }
+  .sheet { position: absolute; left: 8px; right: 8px; bottom: 8px; background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.2); font-size: 9px; }
+  .sheet .st { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .sheet .btn { margin-top: 10px; text-align: center; background: #0A66E8; color: #fff; font-weight: 700; border-radius: 10px; padding: 8px; font-size: 9.5px; }
+
+  /* ---------- layout: steps ---------- */
+  .steps { display: flex; gap: 14px; justify-content: center; align-items: flex-start; }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 236px; }
+  .step.narrow, .steps.four .step { width: 196px; }
+  .steps.four .phone { width: 196px; height: 404px; border-radius: 30px; padding: 7px; }
+  .steps.four .screen { border-radius: 24px; }
+  .num { width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: #fff; font-family: Barlow; font-weight: 700; font-size: 15px; display: grid; place-items: center; flex: none; }
+  .lab { display: flex; gap: 9px; align-items: flex-start; font-size: 13px; line-height: 1.35; width: 100%; }
+  .lab b { font-weight: 600; }
+  .arrow { align-self: center; margin-top: -40px; color: var(--muted); font-size: 22px; }
+  .title { font-family: Barlow; font-weight: 700; font-size: 30px; line-height: 1; margin-bottom: 4px; }
+  .sub { font-size: 14px; color: var(--muted); margin-bottom: 22px; }
+  .note { font-size: 11.5px; color: var(--muted); margin-top: 18px; text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- =============================== HERO =============================== -->
+<section class="shot" id="hero" style="display:flex; align-items:center; gap:40px; padding:40px 48px; background: linear-gradient(180deg, #EDEFF3 0%, #E3E7F2 100%);">
+  <div style="flex:1;">
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;">
+      <img src="../../native-android/res/mipmap-xxxhdpi/ic_launcher.png" style="width:60px;height:60px;display:block;">
+      <div class="display" style="font-size:56px; line-height:1;">Unreel</div>
+    </div>
+    <div style="font-size:25px; font-weight:700; line-height:1.25; letter-spacing:-.3px;">Block YouTube Shorts<br>and Instagram Reels.<br>Keep the rest of both apps.</div>
+    <div style="font-size:15px; color:var(--muted); margin-top:14px; line-height:1.5; max-width:400px;">Search, long videos, feed posts, Stories and messages keep working. The endless swipe feed doesn’t.</div>
+    <div style="display:flex; gap:8px; margin-top:22px; flex-wrap:wrap;">
+      <span style="font-size:12px; font-weight:600; padding:6px 11px; border-radius:20px; background:#fff; border:1px solid var(--line);">Android app</span>
+      <span style="font-size:12px; font-weight:600; padding:6px 11px; border-radius:20px; background:#fff; border:1px solid var(--line);">iPhone and iPad in Safari</span>
+      <span style="font-size:12px; font-weight:600; padding:6px 11px; border-radius:20px; background:#fff; border:1px solid var(--line);">Open source</span>
+    </div>
+  </div>
+  <div class="phone" style="width:270px;height:556px;">
+    <div class="screen ur" data-dashboard="big"></div>
+  </div>
+</section>
+
+<!-- =========================== HOW IT WORKS =========================== -->
+<section class="shot" id="how">
+  <div class="title">How it works</div>
+  <div class="sub">Unreel watches only YouTube and Instagram, and only steps in when the short-video feed opens.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="phone"><div class="screen va">
+        <div class="status" style="color:#fff"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="vid"><div class="swipe"><b>↑</b>swipe for the next one</div><div class="side"><i></i><i></i><i></i></div><div class="cap"><i style="width:60%"></i><i style="width:85%"></i></div></div>
+        <div class="nav" style="background:#0F0F12"><span>Home</span><span class="on">Shorts</span><span>Subscriptions</span><span>You</span></div>
+      </div></div>
+      <div class="lab"><span class="num">1</span><span><b>You open Shorts or Reels</b><br>from the tab, a link or the feed.</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="phone"><div class="screen pause">
+        <div class="t">Shorts are blocked</div>
+        <div class="b">You came here for something.<br>Was it this?</div>
+        <div class="c">23 stopped today</div>
+        <div class="btn">Back to what I was doing</div>
+      </div></div>
+      <div class="lab"><span class="num">2</span><span><b>Unreel steps in</b><br>and shows a short pause screen.</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="phone"><div class="screen va light">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="chips"><span>All</span><span>Music</span><span>Podcasts</span><span>Live</span></div>
+        <div class="feed"><div class="thumb"></div><div class="meta"><i></i><i></i></div><div class="thumb b"></div><div class="meta"><i></i><i></i></div></div>
+        <div class="nav"><span class="on">Home</span><span>Shorts</span><span>Subscriptions</span><span>You</span></div>
+      </div></div>
+      <div class="lab"><span class="num">3</span><span><b>You’re back on Home</b><br>with the rest of the app working.</span></div>
+    </div>
+  </div>
+  <div class="note">Illustration. A Reel or Short someone sends you can still play once; swiping to the next one is blocked.</div>
+</section>
+
+<!-- =========================== PLAY PROTECT =========================== -->
+<section class="shot" id="playprotect">
+  <div class="title">If Google Play Protect blocks the install</div>
+  <div class="sub">It blocks apps from outside the Play Store that ask for Accessibility. Turn scanning off only while you install.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="phone"><div class="screen sys">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="shield">
+          <div class="ic"></div>
+          <b>App blocked to protect your device</b>
+          <p>This app can request access to sensitive data. Apps like this are often used by scammers.</p>
+          <div class="acts"><span class="p">Got it</span><span class="q hl">More details</span></div>
+        </div>
+      </div></div>
+      <div class="lab"><span class="num">1</span><span><b>Tap More details.</b> If you see <b>Install anyway</b>, tap it and you’re done.</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="phone"><div class="screen sys">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="hd"><b>Play Protect settings</b></div>
+        <div class="grp">
+          <div class="it hl"><span>Scan apps with Play Protect<small>Checks apps for harmful behaviour</small></span><span class="sw off"></span></div>
+          <div class="it hl"><span>Improve harmful app detection<small>Send unknown apps to Google</small></span><span class="sw off"></span></div>
+        </div>
+        <div class="cap">Play Store → your profile picture → Play Protect → gear icon</div>
+      </div></div>
+      <div class="lab"><span class="num">2</span><span><b>Otherwise, turn off both switches</b> in the Play Store’s Play Protect settings.</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step">
+      <div class="phone"><div class="screen sys">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="hd"><b>Downloads</b></div>
+        <div class="grp"><div class="it"><span style="display:flex;gap:8px;align-items:center"><img src="../../native-android/res/mipmap-xxxhdpi/ic_launcher.png" style="width:22px;height:22px;display:block;">Unreel.apk<small style="margin:0 0 0 2px">0.9 MB</small></span></div></div>
+        <div class="scrim">
+          <div class="dialog"><b>Unreel</b>Do you want to install this app?<div class="acts"><span>Cancel</span><span class="solid ring">Install</span></div></div>
+        </div>
+      </div></div>
+      <div class="lab"><span class="num">3</span><span><b>Install Unreel.apk.</b> Then turn <b>Scan apps with Play Protect</b> back on.</span></div>
+    </div>
+  </div>
+  <div class="note">Illustration — wording and layout vary by phone. On Samsung, also turn off Auto Blocker (Settings → Security and privacy) while installing.</div>
+</section>
+
+<!-- =========================== ACCESSIBILITY =========================== -->
+<section class="shot" id="accessibility">
+  <div class="title">If the Accessibility switch won’t turn on</div>
+  <div class="sub">Android restricts Accessibility for apps installed from a file. Try once, unlock it in App info, then switch it on.</div>
+  <div class="steps four">
+    <div class="step">
+      <div class="phone"><div class="screen sys">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="hd"><b>Unreel</b></div>
+        <div class="grp"><div class="it dim"><span>Use Unreel</span><span class="sw off"></span></div></div>
+        <div class="scrim">
+          <div class="dialog"><b>Restricted setting</b>For your security, this setting is currently unavailable.<div class="acts"><span class="hl" style="padding:4px 8px">OK</span></div></div>
+        </div>
+      </div></div>
+      <div class="lab"><span class="num">1</span><span><b>Settings → Accessibility → Installed apps → Unreel.</b> Tap the switch, then <b>OK</b>.</span></div>
+    </div>
+    <div class="step">
+      <div class="phone"><div class="screen sys">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="hd"><b>App info</b><span class="kebab hl"><i></i><i></i><i></i></span></div>
+        <div class="appinfo" style="padding-top:78px"><img src="../../native-android/res/mipmap-xxxhdpi/ic_launcher.png" style="width:44px;height:44px;display:block;">Unreel</div>
+        <div class="grp"><div class="it"><span>Notifications</span></div><div class="it"><span>Permissions</span></div><div class="it"><span>Storage</span></div></div>
+        <div class="menu"><div>Uninstall for all users</div><div class="hl">Allow restricted settings</div></div>
+      </div></div>
+      <div class="lab"><span class="num">2</span><span><b>Settings → Apps → Unreel → ⋮ → Allow restricted settings.</b> Confirm with your PIN.</span></div>
+    </div>
+    <div class="step">
+      <div class="phone"><div class="screen sys">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="hd"><b>Unreel</b></div>
+        <div class="grp"><div class="it"><span>Use Unreel</span><span class="sw sys"></span></div></div>
+        <div class="scrim">
+          <div class="dialog"><b>Allow Unreel to have full control of your device?</b>It can view and control the screen, and view and perform actions.<div class="acts"><span>Deny</span><span class="solid ring">Allow</span></div></div>
+        </div>
+      </div></div>
+      <div class="lab"><span class="num">3</span><span><b>Go back to Accessibility → Unreel,</b> switch it on and tap <b>Allow</b>.</span></div>
+    </div>
+    <div class="step">
+      <div class="phone"><div class="screen ur" data-dashboard="small"></div></div>
+      <div class="lab"><span class="num">4</span><span><b>Open Unreel.</b> It should say <b>Blocking is on</b>.</span></div>
+    </div>
+  </div>
+  <div class="note">Illustration — menus differ slightly between phones. “Allow restricted settings” only appears after step 1.</div>
+</section>
+
+
+<!-- =============================== IPHONE =============================== -->
+<section class="shot" id="iphone">
+  <div class="title">On iPhone and iPad</div>
+  <div class="sub">iOS doesn’t let apps look inside other apps, so Unreel works on the websites in Safari instead.</div>
+  <div class="steps four">
+    <div class="step">
+      <div class="phone"><div class="screen ios">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="bar">App Store</div>
+        <div class="grp"><div class="store"><div class="codeicon">&lt;/&gt;</div><div style="font-size:10px"><b>Userscripts</b><div style="font-size:8px;color:#8A8A8E;margin:2px 0 7px">Safari extension</div><span class="get ring" style="display:inline-block">Get</span></div></div></div>
+        <div class="hint">Open source, by Justin Wasack. Needs iOS 15 or later.</div>
+      </div></div>
+      <div class="lab"><span class="num">1</span><span><b>Install the free Userscripts app</b> from the App Store and open it once.</span></div>
+    </div>
+    <div class="step">
+      <div class="phone"><div class="screen ios">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="back">‹ Extensions</div>
+        <div class="bar">Userscripts</div>
+        <div class="grp"><div class="it hl"><span>Allow Extension</span><span class="sw ios-on"></span></div></div>
+        <div class="grp"><div class="it"><span>All Websites</span><span style="color:#8A8A8E">Allow ›</span></div></div>
+        <div class="hint">Settings → Apps → Safari → Extensions → Userscripts</div>
+      </div></div>
+      <div class="lab"><span class="num">2</span><span><b>Turn it on in Safari’s extension settings</b> and allow it on all websites.</span></div>
+    </div>
+    <div class="step">
+      <div class="phone"><div class="screen ios" style="background:#fff">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="urlbar"><span>github.com</span><span>AA</span></div>
+        <div class="codefile">// ==UserScript==
+// @name  Unreel: no Shorts,
+//        no Reels
+// @match *://*.youtube.com/*
+// @match *://*.instagram.com/*
+// ==/UserScript==</div>
+        <div class="sheet"><div class="st"><div class="codeicon" style="width:22px;height:22px;border-radius:6px;font-size:8px;line-height:22px">&lt;/&gt;</div>Userscripts</div>Install “Unreel: no Shorts, no Reels”?<div class="btn ring">Install</div></div>
+      </div></div>
+      <div class="lab"><span class="num">3</span><span><b>Open unreel.user.js in Safari,</b> tap the extension button, then <b>Install</b>.</span></div>
+    </div>
+    <div class="step">
+      <div class="phone"><div class="screen va light">
+        <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+        <div class="urlbar" style="margin-top:2px"><span>m.youtube.com</span><span>AA</span></div>
+        <div class="chips"><span>All</span><span>Music</span><span>Podcasts</span></div>
+        <div class="feed"><div class="thumb"></div><div class="meta"><i></i><i></i></div><div class="thumb b"></div></div>
+        <div class="nav"><span class="on">Home</span><span>Subscriptions</span><span>You</span></div>
+      </div></div>
+      <div class="lab"><span class="num">4</span><span><b>Use youtube.com and instagram.com in Safari.</b> Shorts and Reels are gone.</span></div>
+    </div>
+  </div>
+  <div class="note">Illustration — screens vary by iOS version. Delete the YouTube and Instagram apps so links open in Safari, or lock them with a Screen Time limit.</div>
+</section>
+
+<script>
+  // Dashboard mock (same layout and copy as native-android MainActivity), sample data.
+  function dashboard(count) {
+    const frames = Array.from({ length: count }, () => '<span class="frame"></span>').join('');
+    const days = [['S',9],['M',19],['T',6],['W',14],['T',19],['F',11],['S',count]];
+    const max = Math.max(...days.map(d => d[1]));
+    const bars = days.map(([d, n], i) => `<div class="${i === 6 ? 'today' : ''}"><span>${n}</span><i style="height:${Math.max(4, n / max * 42)}px"></i><span>${d}</span></div>`).join('');
+    return `
+      <div class="status"><span>9:41</span><span class="dots"><i></i><i></i></span></div>
+      <div class="body">
+        <h1>Unreel</h1>
+        <div class="hero">
+          <div class="top"><div style="flex:1"><div class="t1">Blocking is on</div><div class="t2">Shorts and Reels close as soon as they open.</div></div><span class="sw"></span></div>
+          <div class="count"><b>${count}</b><span>Shorts and Reels<br>stopped today</span></div>
+          <div class="frames">${frames}</div>
+          <div class="split"><div><b>14</b><span>YouTube</span></div><div><b>${count - 14}</b><span>Instagram</span></div></div>
+        </div>
+        <h2>This week</h2>
+        <div class="card"><div class="bars">${bars}</div></div>
+        <h2>What to block</h2>
+        <div class="card">
+          <div class="row"><span>YouTube Shorts</span><span class="sw brand"></span></div>
+          <div class="row"><span>Instagram Reels</span><span class="sw brand"></span></div>
+          <div class="row"><span>Allow one shared video<small>Swiping to the next one is blocked.</small></span><span class="sw brand"></span></div>
+        </div>
+      </div>`;
+  }
+  document.querySelectorAll('[data-dashboard]').forEach(el => { el.innerHTML = dashboard(23); });
+</script>
+</body>
+</html>

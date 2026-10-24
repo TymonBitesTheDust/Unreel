@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Accessibility service configuration.
+
+  packageNames      Events are delivered ONLY for these apps. The service widens or narrows this
+                    at runtime from the detection rules (see ShortFormBlockerService.applyServiceInfo),
+                    but the XML value is the safe default if the rules can't be read.
+  flagReportViewIds Required: without it viewIdResourceName is null and
+                    findAccessibilityNodeInfosByViewId() returns nothing.
+  flagIncludeNotImportantViews
+                    The player containers we look for (e.g. clips_video_container) are plain
+                    FrameLayouts that apps often mark "not important for accessibility".
+  flagRetrieveInteractiveWindows
+                    Lets us find the app's own window when the active window is the keyboard,
+                    a system dialog or a picture-in-picture surface.
+  isAccessibilityTool
+                    false: this is a digital-wellbeing tool, not an assistive technology. Declaring
+                    true to dodge Play review or Android Advanced Protection is a policy violation.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+  android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewScrolled|typeViewClicked|typeViewSelected"
+  android:accessibilityFeedbackType="feedbackGeneric"
+  android:accessibilityFlags="flagReportViewIds|flagIncludeNotImportantViews|flagRetrieveInteractiveWindows"
+  android:canPerformGestures="false"
+  android:canRetrieveWindowContent="true"
+  android:description="@string/unreel_accessibility_description"
+  android:isAccessibilityTool="false"
+  android:notificationTimeout="100"
+  android:packageNames="com.google.android.youtube,com.instagram.android" />

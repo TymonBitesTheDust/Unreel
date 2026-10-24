@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <style name="Unreel" parent="android:Theme.Material.NoActionBar">
+    <item name="android:windowBackground">@color/unreel_background</item>
+    <item name="android:statusBarColor">@color/unreel_background</item>
+    <item name="android:navigationBarColor">@color/unreel_background</item>
+    <item name="android:colorAccent">@color/unreel_brand</item>
+  </style>
+  <color name="unreel_background">#0D1124</color>
+  <color name="unreel_brand">#9AA6FF</color>
+</resources>

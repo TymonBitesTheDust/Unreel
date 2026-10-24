@@ -1,0 +1,48 @@
+# Builds an installable Unreel APK on GitHub's servers (which come with the Android SDK).
+# Push this repo to GitHub, then: Actions → "Android APK" → Run workflow → download the
+# "unreel-apk" artifact when it finishes (about 15–20 minutes the first time).
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Generate the native Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Run detection unit tests
+        working-directory: android
+        run: ./gradlew :unreel-blocker:testDebugUnitTest --no-daemon
+
+      # Expo's template signs release builds with the debug keystore, so this APK installs
+      # directly on a phone. For the Play Store, build an .aab signed with your own key instead.
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unreel-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error

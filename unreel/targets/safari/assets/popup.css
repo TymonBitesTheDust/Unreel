@@ -1,0 +1,33 @@
+:root {
+  color-scheme: light dark;
+  --paper: #f5f1ea;
+  --ink: #1d1b18;
+  --muted: #6b655c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1a1916;
+    --ink: #f2eee7;
+    --muted: #a39d93;
+  }
+}
+
+body {
+  width: 260px;
+  margin: 0;
+  padding: 16px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 15px/1.4 -apple-system, system-ui, sans-serif;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 17px;
+}
+
+p {
+  margin: 0;
+  color: var(--muted);
+}

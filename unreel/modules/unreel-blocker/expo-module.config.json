@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["UnreelBlockerModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.unreelblocker.UnreelBlockerModule"]
+  }
+}
