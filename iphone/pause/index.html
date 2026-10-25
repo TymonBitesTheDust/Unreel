@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Unreel</title>
+    <meta name="theme-color" content="#2B3BD6" />
+    <!-- Not a standalone web app on purpose: it must open in Safari, where the Unreel script runs. -->
+    <meta name="apple-mobile-web-app-title" content="Unreel" />
+    <meta name="robots" content="noindex" />
+    <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../assets/favicon.png" />
+    <link rel="stylesheet" href="../assets/site.css" />
+    <style>
+      html,
+      body {
+        background: var(--brand);
+        color: var(--on-brand);
+        min-height: 100%;
+      }
+      main {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+        max-width: 440px;
+      }
+      h1 {
+        font-size: 44px;
+        margin: 0 0 10px;
+      }
+      .body {
+        color: var(--on-brand-muted);
+        font-size: 18px;
+        margin: 0 auto;
+        max-width: 320px;
+      }
+      .count {
+        color: var(--signal);
+        font-weight: 600;
+        margin-top: 14px;
+      }
+      .ring {
+        position: relative;
+        width: 148px;
+        height: 148px;
+        margin: 34px auto 30px;
+      }
+      .ring svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+      .ring circle {
+        fill: none;
+        stroke-width: 6;
+      }
+      .ring .track {
+        stroke: rgb(255 255 255 / 20%);
+      }
+      .ring .bar {
+        stroke: #fff;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.25s linear;
+      }
+      .ring .breath {
+        position: absolute;
+        inset: 26px;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 14%);
+        animation: breathe 8s ease-in-out infinite;
+      }
+      .ring .seconds {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-family: var(--display);
+        font-size: 46px;
+        font-variant-numeric: tabular-nums;
+      }
+      @keyframes breathe {
+        0%,
+        100% {
+          transform: scale(0.72);
+        }
+        50% {
+          transform: scale(1);
+        }
+      }
+      .hint {
+        color: var(--on-brand-muted);
+        font-size: 15px;
+        min-height: 22px;
+      }
+      .actions {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .actions .button {
+        width: 100%;
+        margin: 0;
+      }
+      .primary {
+        background: #fff !important;
+        color: var(--brand) !important;
+        font-weight: 700 !important;
+      }
+      .primary[aria-disabled='true'] {
+        opacity: 0.55;
+        pointer-events: none;
+      }
+      .ghost {
+        background: transparent !important;
+        border: 1.5px solid rgb(255 255 255 / 60%) !important;
+        color: #fff !important;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .help {
+        text-align: left;
+        background: rgb(0 0 0 / 18%);
+        border-radius: 16px;
+        padding: 14px 16px;
+        margin-top: 22px;
+        font-size: 15px;
+        color: var(--on-brand-muted);
+      }
+      .help b {
+        color: #fff;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ring .breath {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section id="pause">
+        <h1 id="title">Opening YouTube</h1>
+        <p class="body">You came here for something. Was it this?</p>
+        <p class="count" id="count"></p>
+        <div class="ring" aria-hidden="true">
+          <span class="breath"></span>
+          <svg viewBox="0 0 100 100">
+            <circle class="track" cx="50" cy="50" r="46" />
+            <circle class="bar" id="bar" cx="50" cy="50" r="46" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0" />
+          </svg>
+          <span class="seconds" id="seconds">10</span>
+        </div>
+        <p class="hint" id="hint">Breathe in… and out.</p>
+        <div class="actions">
+          <a class="button primary" id="go" href="https://m.youtube.com/" aria-disabled="true">Open youtube.com</a>
+          <button class="button ghost" id="back" type="button">Back to what I was doing</button>
+        </div>
+      </section>
+
+      <section id="done" hidden>
+        <h1>Good call</h1>
+        <p class="body" id="done-body">You can close this tab.</p>
+        <p class="count" id="done-count"></p>
+      </section>
+
+      <section id="loop" hidden>
+        <h1>The app opened again</h1>
+        <p class="body">iPhone sends <span id="loop-site">youtube.com</span> links to the <span id="loop-app">YouTube</span> app while it's installed, so the website never got a chance.</p>
+        <div class="help">
+          <p><b>Fix it for good:</b> delete the <span class="loop-app">YouTube</span> app. Links then open in Safari, where Unreel removes the feed.</p>
+          <p>
+            <b>Or for now:</b> close this tab, open a new one and type <b id="loop-type">youtube.com</b> into the address bar. Typed addresses always stay in Safari.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (() => {
+        const APPS = {
+          youtube: { name: 'YouTube', site: 'youtube.com', url: 'https://m.youtube.com/', feed: 'Shorts' },
+          instagram: { name: 'Instagram', site: 'instagram.com', url: 'https://www.instagram.com/', feed: 'Reels' },
+        };
+        const params = new URLSearchParams(location.search);
+        const key = APPS[params.get('app')] ? params.get('app') : 'youtube';
+        const app = APPS[key];
+        const fromApp = params.get('from') === 'app';
+        const waitSeconds = Math.min(Math.max(parseInt(params.get('wait') || '10', 10) || 10, 3), 60);
+
+        document.title = `Unreel · ${app.name}`;
+        document.querySelector('meta[name="apple-mobile-web-app-title"]').content = app.name;
+
+        // Counts live only in this browser, keyed by local date.
+        const pad = (n) => String(n).padStart(2, '0');
+        const d = new Date();
+        const today = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const store = {
+          get(name) {
+            try {
+              return JSON.parse(localStorage.getItem(`unreel.${name}`) || 'null');
+            } catch {
+              return null;
+            }
+          },
+          set(name, value) {
+            try {
+              localStorage.setItem(`unreel.${name}`, JSON.stringify(value));
+            } catch {
+              /* private browsing: counts just won't persist */
+            }
+          },
+        };
+        const counts = (() => {
+          const c = store.get(`counts.${key}`);
+          return c && c.day === today ? c : { day: today, opened: 0, turnedBack: 0 };
+        })();
+        const ordinal = (n) => {
+          const s = ['th', 'st', 'nd', 'rd'];
+          const v = n % 100;
+          return n + (s[(v - 20) % 10] || s[v] || s[0]);
+        };
+
+        // Came straight back from "Open youtube.com"? Then the link opened the app, which
+        // triggered the automation again. Explain instead of looping.
+        const lastGo = store.get(`lastGo.${key}`) || 0;
+        if (fromApp && Date.now() - lastGo < 20_000) {
+          store.set(`lastGo.${key}`, 0);
+          document.getElementById('pause').hidden = true;
+          document.getElementById('loop').hidden = false;
+          document.getElementById('loop-site').textContent = app.site;
+          document.getElementById('loop-type').textContent = app.site;
+          for (const el of document.querySelectorAll('#loop-app, .loop-app')) el.textContent = app.name;
+          return;
+        }
+
+        counts.opened += 1;
+        store.set(`counts.${key}`, counts);
+
+        document.getElementById('title').textContent = fromApp ? `You opened ${app.name}` : `Opening ${app.name}`;
+        document.getElementById('count').textContent = `${ordinal(counts.opened)} time today`;
+        const go = document.getElementById('go');
+        go.href = app.url;
+        go.textContent = `Open ${app.site}`;
+
+        const bar = document.getElementById('bar');
+        const seconds = document.getElementById('seconds');
+        const hint = document.getElementById('hint');
+        let remainingMs = waitSeconds * 1000;
+        let last = performance.now();
+        let timer = 0;
+
+        const tick = () => {
+          const now = performance.now();
+          // Only time spent looking at this page counts; switching away pauses the wait.
+          if (document.visibilityState === 'visible') remainingMs -= now - last;
+          last = now;
+          const left = Math.max(remainingMs, 0);
+          seconds.textContent = String(Math.ceil(left / 1000));
+          bar.style.strokeDashoffset = String(100 - (left / (waitSeconds * 1000)) * 100);
+          if (left <= 0) {
+            clearInterval(timer);
+            seconds.textContent = '✓';
+            hint.textContent = `No ${app.feed} there: Unreel removes the feed.`;
+            go.removeAttribute('aria-disabled');
+          }
+        };
+        timer = setInterval(tick, 250);
+        document.addEventListener('visibilitychange', () => {
+          last = performance.now();
+        });
+
+        go.addEventListener('click', (e) => {
+          if (go.getAttribute('aria-disabled') === 'true') {
+            e.preventDefault();
+            return;
+          }
+          store.set(`lastGo.${key}`, Date.now());
+        });
+
+        document.getElementById('back').addEventListener('click', () => {
+          clearInterval(timer);
+          counts.turnedBack += 1;
+          store.set(`counts.${key}`, counts);
+          document.getElementById('pause').hidden = true;
+          document.getElementById('done').hidden = false;
+          document.getElementById('done-count').textContent =
+            counts.turnedBack === 1 ? `You turned back from ${app.name} once today.` : `You turned back from ${app.name} ${counts.turnedBack} times today.`;
+        });
+      })();
+    </script>
+  </body>
+</html>

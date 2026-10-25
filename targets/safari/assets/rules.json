@@ -4,11 +4,15 @@
     "priority": 1,
     "action": {
       "type": "redirect",
-      "redirect": { "regexSubstitution": "https://\\1youtube.com/watch?v=\\2" }
+      "redirect": {
+        "regexSubstitution": "https://\\1youtube.com/watch?v=\\2"
+      }
     },
     "condition": {
       "regexFilter": "^https://(www\\.|m\\.)?youtube\\.com/shorts/([A-Za-z0-9_-]+)",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -16,11 +20,15 @@
     "priority": 1,
     "action": {
       "type": "redirect",
-      "redirect": { "url": "https://www.youtube.com/" }
+      "redirect": {
+        "url": "https://www.youtube.com/"
+      }
     },
     "condition": {
       "regexFilter": "^https://(www\\.|m\\.)?youtube\\.com/shorts/?(\\?.*)?$",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -28,11 +36,15 @@
     "priority": 2,
     "action": {
       "type": "redirect",
-      "redirect": { "regexSubstitution": "https://www.instagram.com/p/\\2/" }
+      "redirect": {
+        "regexSubstitution": "https://www.instagram.com/p/\\2/"
+      }
     },
     "condition": {
       "regexFilter": "^https://(www\\.)?instagram\\.com/reels?/([A-Za-z0-9_-]{8,})/?",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   },
   {
@@ -40,11 +52,79 @@
     "priority": 1,
     "action": {
       "type": "redirect",
-      "redirect": { "url": "https://www.instagram.com/" }
+      "redirect": {
+        "url": "https://www.instagram.com/"
+      }
     },
     "condition": {
       "regexFilter": "^https://(www\\.)?instagram\\.com/reels/?(\\?.*)?$",
-      "resourceTypes": ["main_frame"]
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 5,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "regexSubstitution": "https://\\1youtube.com/\\2/videos"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https://(www\\.|m\\.)?youtube\\.com/(@[^/?#]+|channel/[^/?#]+|c/[^/?#]+|user/[^/?#]+)/shorts/?(\\?.*)?$",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 6,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "regexSubstitution": "https://\\1youtube.com/hashtag/\\2"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https://(www\\.|m\\.)?youtube\\.com/hashtag/([^/?#]+)/shorts/?(\\?.*)?$",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 7,
+    "priority": 2,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "url": "https://www.instagram.com/"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https://(www\\.)?instagram\\.com/reels/audio/",
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 8,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "regexSubstitution": "https://www.instagram.com/\\2/"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https://(www\\.)?instagram\\.com/([A-Za-z0-9._]+)/reels/?(\\?.*)?$",
+      "resourceTypes": [
+        "main_frame"
+      ]
     }
   }
 ]

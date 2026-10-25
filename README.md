@@ -9,7 +9,7 @@ Unreel stops the **YouTube Shorts** and **Instagram Reels** feeds without blocki
 | Device | What to download | Needs |
 |---|---|---|
 | **Android** | [`Unreel.apk`](../../releases/latest), the app | Android 8.0 or later. Doesn't use the internet |
-| **iPhone, iPad, Mac** | [`unreel.user.js`](../../raw/HEAD/iphone/unreel.user.js), a script for Safari | The free [Userscripts](https://apps.apple.com/app/id1463298887) app. [Setup steps](#iphone-and-ipad) |
+| **iPhone, iPad, Mac** | [`unreel.user.js`](../../raw/HEAD/iphone/unreel.user.js), a script for Safari | The free [Userscripts](https://apps.apple.com/app/id1463298887) app. [Setup guide for your phone](https://tymonbitesthedust.github.io/Unreel/) · [Steps below](#iphone-and-ipad) |
 
 > Unreel isn't affiliated with YouTube, Google, Instagram or Meta.
 
@@ -119,6 +119,8 @@ Compare it with `apksigner verify --print-certs Unreel.apk` (part of Android's b
 
 iOS doesn't let apps look inside other apps, so no iPhone app can block just the Shorts or Reels tab inside YouTube or Instagram. Instead, Unreel removes them from **youtube.com** and **instagram.com** in Safari, where the rest of both sites keeps working: feed, Stories, messages, search and long videos.
 
+**Easiest: open [the setup guide](https://tymonbitesthedust.github.io/Unreel/) on your iPhone.** It has the same steps with tap-to-open links, and the pause pages below.
+
 <p align="center">
   <img src="docs/images/iphone-setup.png" alt="iPhone steps: install Userscripts, turn it on in Safari settings, install unreel.user.js, use the websites without Shorts and Reels" width="880">
 </p>
@@ -132,13 +134,16 @@ iOS doesn't let apps look inside other apps, so no iPhone app can block just the
    - Swiping to the next one doesn't happen.
 
 **Make it stick.**
-- **Delete the YouTube and Instagram apps** so links open in Safari, where the script works.
-- **Put the websites on your Home Screen:** open each site in Safari, tap **Share → Add to Home Screen**. They then open like apps.
-- **Or keep the apps but lock them:** go to **Settings → Screen Time → App Limits**, add YouTube and Instagram with a 1-minute limit, and ask a friend to set the Screen Time passcode.
+- **Delete the YouTube and Instagram apps** so links open in Safari, where the script works. While an app is installed, iPhone opens youtube.com and instagram.com links in the app.
+- **Put the websites on your Home Screen, with a pause.** Open the [YouTube pause](https://tymonbitesthedust.github.io/Unreel/pause/?app=youtube) or [Instagram pause](https://tymonbitesthedust.github.io/Unreel/pause/?app=instagram) page and tap **Share → Add to Home Screen**. Like the Android pause card, each open is counted and waits 10 seconds before you can continue to the site; turning back is counted too. Counts stay in Safari on your phone. (Or add the sites themselves for no pause.)
+- **Keeping the apps? Pause them with Shortcuts.** In **Shortcuts → Automation → +**, choose **App → YouTube → Is Opened → Run Immediately**, then **New Blank Automation** with the action **Open URLs** and the link `https://tymonbitesthedust.github.io/Unreel/pause/?app=youtube&from=app`. Repeat for Instagram with `app=instagram`. Opening the app now shows the pause and offers the website instead. If continuing reopens the app (installed apps take over their links), the pause page notices and explains; deleting the app is the fix.
+- **Or lock the apps:** go to **Settings → Screen Time → App Limits**, add YouTube and Instagram with a 1-minute limit, and ask a friend to set the Screen Time passcode.
 
 **Also on Mac and other browsers.** Userscripts works in Safari on macOS 12 or later. In Chrome, Firefox or Edge on a computer, install [Violentmonkey](https://violentmonkey.github.io) or Tampermonkey, then open the [unreel.user.js](../../raw/HEAD/iphone/unreel.user.js) link; it offers to install the script.
 
-**If Shorts or Reels come back,** YouTube or Instagram changed their website. [Open an issue](../../issues), and update the script once a fix is released.
+**Updates.** From version 1.1 the script updates itself: Userscripts checks for new versions and offers them in its popup. If you installed Unreel before 1.1, install it once more from the link in step 3.
+
+**If Shorts or Reels come back,** YouTube or Instagram changed their website. [Open an issue](../../issues). If a site starts sending Unreel's redirect straight back, the script stops after two tries and shows a short notice instead of reloading forever.
 
 **Why there's no iPhone app download.** iPhone apps can only be installed from the App Store or TestFlight, and Screen Time apps need Apple's approval first. This repository includes that app: it locks Instagram and YouTube with Screen Time and comes with a Safari extension. Building it needs a Mac with Xcode and a paid Apple Developer account; see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -150,7 +155,9 @@ iOS doesn't let apps look inside other apps, so no iPhone app can block just the
 | `modules/unreel-blocker/android/` | The blocker shared by both Android builds: accessibility service, detection rules, overlay, stats |
 | `modules/unreel-blocker/android/src/main/assets/unreel_rules.json` | The view IDs and labels Unreel matches. Update these when YouTube or Instagram change their layout |
 | `src/`, `modules/unreel-blocker/ios/`, `targets/` | The Expo (React Native) app, its iOS Screen Time bridge and the iOS extensions |
-| `iphone/unreel.user.js` | The Safari userscript, generated from the Safari extension by `npm run build:userscript` |
+| `iphone/unreel.user.js` | The Safari userscript, generated from the Safari extension by `npm run build:userscript` (with `unreel.meta.js`, which Userscripts polls for updates) |
+| `iphone/index.html`, `iphone/pause/` | The iPhone setup guide and the pause page, published to GitHub Pages by `.github/workflows/iphone.yml` |
+| `scripts/test-userscript.mjs` | Runs `content.js` against a list of URLs and checks that `rules.json` agrees: `npm run test:userscript` |
 | `docs/ARCHITECTURE.md` | Platform limits, design decisions, data flow and edge cases |
 
 **Build the release APK.**
@@ -184,9 +191,12 @@ The **Android APK** GitHub Actions workflow builds it too. That APK is signed wi
 - `README.md` stays at the top of the repository;
 - each release is published, not saved as a draft or marked as a pre-release ("latest" skips both), and has `Unreel.apk` attached with exactly that name;
 - `iphone/unreel.user.js` stays at that path. iPhone users install it straight from the repository, because Safari saves release attachments as downloads instead of letting Userscripts install them;
+- when `targets/safari/assets/content.js`, `content.css` or `rules.json` change, raise `userscript.version` in `package.json` and run `npm run build:userscript`, or installed scripts won't update;
 - Issues stay turned on (**Settings → General → Features → Issues**).
 
 These links only work on github.com, not when you open `README.md` on your computer.
+
+**The iPhone pages.** `.github/workflows/iphone.yml` publishes `iphone/` to GitHub Pages on every push that touches it, after checking the userscript. Turn Pages on once: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The setup guide and pause links above point at `tymonbitesthedust.github.io/Unreel`; change them if the repository moves.
 
 ## Licences
 

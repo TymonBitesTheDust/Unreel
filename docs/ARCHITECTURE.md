@@ -263,6 +263,8 @@ Tightening changes apply immediately. The pending request is persisted, so killi
 | iOS: universal links | Tapping an instagram.com link in Safari opens the shielded app | Long-press → open in Safari; the extension handles the page |
 | iOS: user revokes Screen Time access | Shields drop | Status shows authorization isn't approved; setup reappears |
 | Web selectors change | Shelves reappear in Safari | Same maintenance loop as Android IDs; CSS lives in one file |
+| Web redirect bounced back (e.g. a site starts sending `/watch` to `/shorts`) | Page reloads forever | `content.js` redirects at most twice from the same path in 10 s, then stops and shows a notice; covered by `scripts/test-userscript.mjs` |
+| Userscript fixes | Installed copies stay old | `@updateURL` → `iphone/unreel.meta.js`; raise `userscript.version` in `package.json` with every change |
 | Expo Go | No native module | `requireOptionalNativeModule`; the app says a development build is needed |
 | Keychain unavailable | Friction can't load | Storage reads fall back to defaults; writes are best-effort |
 

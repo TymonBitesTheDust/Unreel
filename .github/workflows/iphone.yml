@@ -1,0 +1,70 @@
+name: iPhone (Safari script and pages)
+
+# Checks the Safari userscript and publishes iphone/ to GitHub Pages:
+#   https://<owner>.github.io/<repo>/        setup guide
+#   https://<owner>.github.io/<repo>/pause/  the pause page for Home Screen icons and Shortcuts
+# One-time setup: Settings → Pages → Build and deployment → Source: GitHub Actions.
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'iphone/**'
+      - 'targets/safari/assets/**'
+      - 'scripts/build-userscript.mjs'
+      - 'scripts/test-userscript.mjs'
+      - 'package.json'
+      - '.github/workflows/iphone.yml'
+  pull_request:
+    paths:
+      - 'iphone/**'
+      - 'targets/safari/assets/**'
+      - 'scripts/build-userscript.mjs'
+      - 'scripts/test-userscript.mjs'
+      - 'package.json'
+      - '.github/workflows/iphone.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: iphone-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Both scripts use only Node's standard library, so no npm install.
+      - name: Userscript is up to date with the Safari extension
+        run: node scripts/build-userscript.mjs --check
+
+      - name: Redirect rules (content.js and rules.json agree, loop guard)
+        run: node --test scripts/test-userscript.mjs
+
+      - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
+        with:
+          path: iphone
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

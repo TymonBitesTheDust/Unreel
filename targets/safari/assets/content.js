@@ -9,6 +9,9 @@
  *
  * Policy mirrors the Android app: a single Short or Reel someone sent you opens as a normal
  * video/post (no swipe-to-next feed); the feeds themselves bounce back to the home page.
+ *
+ * scripts/test-userscript.mjs runs this file against a list of URLs; add a case there when you
+ * add a rule here or in rules.json.
  */
 (() => {
   const host = location.hostname;
@@ -21,14 +24,23 @@
     const path = url.pathname;
     if (isYouTube) {
       const single = path.match(/^\/shorts\/([A-Za-z0-9_-]+)/);
-      if (single) return `/watch?v=${single[1]}`;
+      if (single) {
+        // Keep a start time if the link had one.
+        const t = new URLSearchParams(url.search).get('t');
+        return `/watch?v=${single[1]}${t && /^\d+s?$/.test(t) ? `&t=${t}` : ''}`;
+      }
       if (/^\/shorts\/?$/.test(path)) return '/';
-      // Channel "Shorts" tabs: /@name/shorts
-      const channelShorts = path.match(/^(\/@[^/]+)\/shorts\/?$/);
+      // Channel "Shorts" tabs: /@name/shorts, /channel/UC…/shorts, /c/name/shorts, /user/name/shorts
+      const channelShorts = path.match(/^(\/(?:@[^/]+|channel\/[^/]+|c\/[^/]+|user\/[^/]+))\/shorts\/?$/);
       if (channelShorts) return `${channelShorts[1]}/videos`;
+      // Hashtag pages have a Shorts-only feed: /hashtag/name/shorts
+      const hashtagShorts = path.match(/^(\/hashtag\/[^/]+)\/shorts\/?$/);
+      if (hashtagShorts) return hashtagShorts[1];
     }
     if (isInstagram) {
       if (/^\/reels\/?$/.test(path)) return '/';
+      // "Reels using this audio" is another swipe feed.
+      if (/^\/reels\/audio\//.test(path)) return '/';
       const single = path.match(/^\/reels?\/([A-Za-z0-9_-]{8,})\/?$/);
       if (single) return `/p/${single[1]}/`;
       // Profile reels grid: /name/reels/
@@ -38,13 +50,54 @@
     return null;
   }
 
+  /**
+   * If a site starts sending us straight back (say YouTube began redirecting /watch to /shorts),
+   * redirecting again would reload the page forever. After two bounces from the same page within
+   * ten seconds, Unreel stops and says so instead.
+   */
+  const GUARD_KEY = 'unreel-redirects';
+  function mayRedirect(from) {
+    try {
+      const now = Date.now();
+      const recent = JSON.parse(sessionStorage.getItem(GUARD_KEY) || '[]').filter((r) => now - r.at < 10_000);
+      if (recent.filter((r) => r.from === from).length >= 2) return false;
+      recent.push({ from, at: now });
+      sessionStorage.setItem(GUARD_KEY, JSON.stringify(recent));
+    } catch {
+      // No sessionStorage (private mode quirks): redirect anyway.
+    }
+    return true;
+  }
+
+  function showStuckNotice() {
+    if (document.getElementById('unreel-notice')) return;
+    if (!document.body) {
+      document.addEventListener('DOMContentLoaded', showStuckNotice, { once: true });
+      return;
+    }
+    const box = document.createElement('div');
+    box.id = 'unreel-notice';
+    box.setAttribute('role', 'status');
+    box.style.cssText =
+      'position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;padding:12px 14px;border-radius:12px;' +
+      'background:#2B3BD6;color:#fff;font:14px/1.4 -apple-system,system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.3)';
+    box.textContent =
+      (isYouTube ? 'Unreel couldn’t open this Short as a normal video. ' : 'Unreel couldn’t open this Reel as a post. ') +
+      'The site may have changed; check for an Unreel update. Tap to close.';
+    box.addEventListener('click', () => box.remove());
+    document.body.appendChild(box);
+  }
+
   let lastHref = '';
   function check() {
     if (location.href === lastHref) return;
     lastHref = location.href;
     const target = rewrite(location);
-    if (target && target !== location.pathname + location.search) {
+    if (!target || target === location.pathname + location.search) return;
+    if (mayRedirect(location.pathname)) {
       location.replace(target);
+    } else {
+      showStuckNotice();
     }
   }
 
@@ -52,8 +105,8 @@
   // isolated world content scripts run in.
   document.addEventListener('yt-navigate-finish', check);
   window.addEventListener('popstate', check);
-  // Fallback for anything that changes history without an event we can see (Instagram).
-  // Comparing one string twice a second is negligible.
+  // Fallback for anything that changes history without an event we can see (Instagram,
+  // m.youtube.com). Comparing one string twice a second is negligible.
   setInterval(check, 500);
   check();
 })();

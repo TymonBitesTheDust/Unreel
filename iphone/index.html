@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Unreel for iPhone</title>
+    <meta name="description" content="Remove YouTube Shorts and Instagram Reels from the websites in Safari, and add a pause before you open them." />
+    <meta name="theme-color" content="#EDEFF3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0D1124" media="(prefers-color-scheme: dark)" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="stylesheet" href="assets/site.css" />
+  </head>
+  <body>
+    <main>
+      <div class="brand-mark"><img src="assets/apple-touch-icon.png" alt="" /> Unreel</div>
+      <h1>No Shorts, no Reels, on iPhone</h1>
+      <p class="lead">
+        iPhone doesn't let apps look inside other apps, so Unreel works on <b>youtube.com</b> and <b>instagram.com</b> in Safari. The Shorts and Reels feeds are gone; search, long
+        videos, posts, Stories and messages keep working.
+      </p>
+
+      <h2>Set it up (2 minutes)</h2>
+
+      <div class="card step">
+        <span class="num">1</span>
+        <div>
+          <b class="t">Get the free Userscripts app</b>
+          It's open source, needs iOS 15 or later, and runs small scripts in Safari. Open it once after installing.
+          <div><a class="button" href="https://apps.apple.com/app/id1463298887">Open in the App Store</a></div>
+        </div>
+      </div>
+
+      <div class="card step">
+        <span class="num">2</span>
+        <div>
+          <b class="t">Turn it on in Safari</b>
+          Open <span class="path">Settings → Apps → Safari → Extensions → Userscripts</span>, turn on <b>Allow Extension</b>, and set <b>All Websites</b> to <b>Allow</b>.
+          <p class="small">On iOS 17 or earlier: Settings → Safari → Extensions.</p>
+        </div>
+      </div>
+
+      <div class="card step">
+        <span class="num">3</span>
+        <div>
+          <b class="t">Install Unreel's script</b>
+          Open the link below in Safari. A page of code appears; that's normal. Tap the <b>AA</b> (or puzzle-piece) button in the address bar, choose <b>Userscripts</b>, then <b>Install</b>.
+          <div><a class="button" id="script-link" href="https://raw.githubusercontent.com/TymonBitesTheDust/Unreel/HEAD/iphone/unreel.user.js">Open unreel.user.js</a></div>
+          <p class="small">Userscripts checks for new versions by itself. If you installed Unreel before version 1.1, install it once more to get updates.</p>
+        </div>
+      </div>
+
+      <div class="card step">
+        <span class="num">4</span>
+        <div>
+          <b class="t">Use the websites</b>
+          Type <b>youtube.com</b> or <b>instagram.com</b> into Safari's address bar. The Shorts tab, Shorts shelves and the Reels tab are gone. A Short someone sends you opens as a
+          normal video, and a Reel as a normal post.
+        </div>
+      </div>
+
+      <h2>Make it stick</h2>
+
+      <div class="card">
+        <b>Delete the YouTube and Instagram apps</b>
+        <p>
+          The simplest way. While an app is installed, iPhone opens youtube.com and instagram.com links in the app, where nothing can remove the feeds. Without it, every link
+          opens in Safari.
+        </p>
+      </div>
+
+      <div class="card">
+        <b>Add them to your Home Screen, with a pause</b>
+        <p>
+          Like the pause card on Android: each time you open YouTube or Instagram from these icons, Unreel counts it and waits a few seconds before letting you in. Turn back and
+          it counts that too.
+        </p>
+        <div class="buttons">
+          <a class="button" href="pause/?app=youtube">YouTube with a pause</a>
+          <a class="button" href="pause/?app=instagram">Instagram with a pause</a>
+        </div>
+        <p class="small">Open one, then tap <b>Share → Add to Home Screen</b>. Rename it if you like.</p>
+      </div>
+
+      <div class="card">
+        <b>Keeping the apps? Pause them with Shortcuts</b>
+        <p>An automation sends you to the pause page whenever the YouTube or Instagram app opens. From there you can go to the website, where the feeds are gone.</p>
+        <ol>
+          <li>Open the <b>Shortcuts</b> app, tap <b>Automation</b>, then <b>+</b> (or <b>New Automation</b>).</li>
+          <li>Choose <b>App</b>, select <b>YouTube</b>, keep <b>Is Opened</b>, and pick <b>Run Immediately</b>. Tap <b>Next</b>.</li>
+          <li>Tap <b>New Blank Automation</b>, add the action <b>Open URLs</b>, and paste this link into it:</li>
+        </ol>
+        <span class="url" data-pause="youtube">pause/?app=youtube&amp;from=app</span>
+        <button class="button secondary" type="button" data-copy="youtube">Copy the YouTube link</button>
+        <ol start="4">
+          <li>Make a second automation for <b>Instagram</b> with this link:</li>
+        </ol>
+        <span class="url" data-pause="instagram">pause/?app=instagram&amp;from=app</span>
+        <button class="button secondary" type="button" data-copy="instagram">Copy the Instagram link</button>
+        <div class="note">
+          <b>If the app opens again</b> when you continue to the website: iPhone sends those links to the installed app. The pause page notices and tells you; deleting the app
+          is the fix. On iOS 16 or earlier, turn off <b>Ask Before Running</b> instead of choosing Run Immediately.
+        </div>
+      </div>
+
+      <div class="card">
+        <b>Or lock the apps with Screen Time</b>
+        <p>
+          <span class="path">Settings → Screen Time → App Limits → Add Limit</span>, choose YouTube and Instagram, set 1 minute, and turn on <b>Block at End of Limit</b>. Ask a
+          friend to set the Screen Time passcode.
+        </p>
+      </div>
+
+      <h2>Privacy</h2>
+      <p>
+        The script runs only on youtube.com and instagram.com, inside Safari, and sends nothing anywhere. The pause pages keep their counts in Safari on your phone. There are no
+        accounts, ads or analytics.
+      </p>
+
+      <footer>
+        <p>Not affiliated with YouTube, Google, Instagram or Meta.</p>
+        <p>
+          <a href="https://github.com/TymonBitesTheDust/Unreel">Source code, Android app and issues</a> · Fonts: Barlow Condensed (<a href="assets/BarlowCondensed-OFL-1.1.txt">OFL 1.1</a>)
+        </p>
+      </footer>
+    </main>
+    <script>
+      // Show absolute pause links (Shortcuts needs the full address) and copy them on tap.
+      for (const el of document.querySelectorAll('[data-pause]')) {
+        el.textContent = new URL(`pause/?app=${el.dataset.pause}&from=app`, location.href).href;
+      }
+      for (const button of document.querySelectorAll('[data-copy]')) {
+        button.addEventListener('click', async () => {
+          const text = document.querySelector(`[data-pause="${button.dataset.copy}"]`).textContent;
+          const label = button.textContent;
+          try {
+            await navigator.clipboard.writeText(text);
+            button.textContent = 'Copied';
+          } catch {
+            button.textContent = 'Press and hold the link to copy it';
+          }
+          setTimeout(() => (button.textContent = label), 2000);
+        });
+      }
+    </script>
+  </body>
+</html>
