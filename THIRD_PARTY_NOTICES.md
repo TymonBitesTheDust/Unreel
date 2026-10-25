@@ -6,11 +6,11 @@ Everything below is free to use, including commercially. This file lists what Un
 
 | Font | Where it's used | Licence | What the licence asks |
 |---|---|---|---|
-| **Barlow Condensed** (SemiBold, Bold), © 2017 The Barlow Project Authors (Jeremy Tribby) | Bundled in the Android APK and the Expo app for headings and numbers | [SIL Open Font License 1.1](https://openfontlicense.org) | Ship the licence with the font files; don't sell the font on its own. The APK includes it at `assets/licenses/BarlowCondensed-OFL-1.1.txt`. |
+| **Barlow Condensed** (SemiBold, Bold), © 2017 The Barlow Project Authors (Jeremy Tribby) | Bundled in the Android APK and the Expo app for headings and numbers, and (Bold, subset to Latin) in the iPhone pages | [SIL Open Font License 1.1](https://openfontlicense.org) | Ship the licence with the font files; don't sell the font on its own. The APK includes it at `assets/licenses/BarlowCondensed-OFL-1.1.txt`; the iPhone pages at `iphone/assets/BarlowCondensed-OFL-1.1.txt`. |
 | **Inter**, © 2016 The Inter Project Authors | Only to draw the pictures in `docs/images/`. Not shipped in the app | SIL Open Font License 1.1 | Nothing for images made with it. |
 | System fonts (Roboto, Samsung One, San Francisco) | Body text in the app | Provided by the phone | Nothing: they aren't shipped with Unreel. |
 
-The font files aren't stored in this repository; `npm install` fetches them from the `@expo-google-fonts/barlow-condensed` package (code MIT, fonts OFL 1.1).
+Apart from the small subset in `iphone/assets/`, the font files aren't stored in this repository; `npm install` fetches them from the `@expo-google-fonts/barlow-condensed` package (code MIT, fonts OFL 1.1).
 
 ## Code inside the Android APK
 
