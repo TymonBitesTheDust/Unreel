@@ -74,8 +74,9 @@ Menus differ slightly between phones. If you see something else:
 
 **"App not installed" when updating.** The new APK was signed with a different key than the one you have. Uninstall Unreel first, then install the new one. This resets your counts and settings.
 
-**Checking your download.** Release APKs are signed with this certificate, SHA-256:
+**Checking your download.** Release APKs from 1.1.0 on are signed with this certificate, SHA-256:
 ```
-620e999dd9e6ef6843e136eb524ae261d95bec3f2d0e720a536048d2ec97fc57
+9e8bc5c4e7a13742e2f3a4e0fa8e05d3e4feecacffddf3f9d5b7b6b32c7752ae
 ```
+1.0.0 used a different key, so going from 1.0.0 to 1.1.0 needs an uninstall first (see above).
 Compare it with `apksigner verify --print-certs Unreel.apk` (part of Android's build tools).
