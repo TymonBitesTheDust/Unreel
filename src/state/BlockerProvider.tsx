@@ -9,6 +9,8 @@ type BlockerState = {
   status: Blocker.NativeStatus | null;
   config: Blocker.BlockerConfig;
   stats: Blocker.BlockStats | null;
+  /** Android: today's and this hour's use of the time limits. */
+  quota: Blocker.QuotaStatus | null;
   ready: boolean;
   /** Bumps on each live block event so the dashboard can animate the newest frame. */
   lastEvent: Blocker.BlockedEvent | null;
@@ -27,6 +29,7 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Blocker.NativeStatus | null>(null);
   const [config, setConfigState] = useState<Blocker.BlockerConfig>(Blocker.DEFAULT_CONFIG);
   const [stats, setStats] = useState<Blocker.BlockStats | null>(null);
+  const [quota, setQuota] = useState<Blocker.QuotaStatus | null>(null);
   const [lastEvent, setLastEvent] = useState<Blocker.BlockedEvent | null>(null);
   const [error, setError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
@@ -37,6 +40,7 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
       setStatus(Blocker.getStatus());
       setConfigState(Blocker.getConfig());
       setStats(Blocker.getStats(STATS_DAYS));
+      setQuota(Blocker.android.getQuota());
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -47,6 +51,7 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
     try {
       setConfigState(await Blocker.setConfig(patch));
       setStatus(Blocker.getStatus());
+      setQuota(Blocker.android.getQuota()); // Limits changed, so what's left did too.
       setError(null);
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
@@ -71,10 +76,11 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
     const blockSub = Blocker.addBlockedListener((event) => {
       setLastEvent(event);
       setStats(Blocker.getStats(STATS_DAYS));
+      setQuota(Blocker.android.getQuota());
     });
     const serviceSub = Blocker.addServiceStateListener(() => refresh());
 
-    // Pauses expire and iOS counters change in extensions without telling us.
+    // Pauses expire, hourly allowances refill and iOS counters change in extensions without telling us.
     const poll = setInterval(() => {
       if (AppState.currentState === 'active') refresh();
     }, POLL_MS);
@@ -93,13 +99,14 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
       status,
       config,
       stats,
+      quota,
       ready: status ? Blocker.isReady(status) : false,
       lastEvent,
       error,
       refresh,
       applyConfig,
     }),
-    [status, config, stats, lastEvent, error, refresh, applyConfig],
+    [status, config, stats, quota, lastEvent, error, refresh, applyConfig],
   );
 
   return <BlockerContext.Provider value={value}>{children}</BlockerContext.Provider>;

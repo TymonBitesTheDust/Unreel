@@ -13,6 +13,13 @@ export type BlockerConfig = {
   allowSharedReels: boolean;
   /** Full-screen pause card after redirecting (otherwise a toast). */
   interstitial: boolean;
+  /**
+   * Time limits: the feeds play until `quotaDailyMinutes` a day or `quotaHourlyMinutes` in the
+   * current clock hour are used up (YouTube and Instagram combined), then they're blocked.
+   */
+  quotaEnabled: boolean;
+  quotaDailyMinutes: number;
+  quotaHourlyMinutes: number;
 
   // iOS: whole-app shields via Screen Time.
   iosMode: 'always' | 'budget';
@@ -27,6 +34,25 @@ export type DayStats = {
   total: number;
   youtube: number;
   instagram: number;
+};
+
+/** (android) Today's and this hour's use of the time limits. Times are ms; instants are epoch ms. */
+export type QuotaStatus = {
+  dailyLimitMinutes: number;
+  hourlyLimitMinutes: number;
+  usedTodayMs: number;
+  usedThisHourMs: number;
+  leftTodayMs: number;
+  leftThisHourMs: number;
+  /** What can be watched right now: the smaller of the two. */
+  leftMs: number;
+  /** Which allowance ran out; 'day' when both have. */
+  exhausted: 'day' | 'hour' | null;
+  /** When the feeds play again, or null while there's time left. */
+  availableAt: number | null;
+  /** The next clock hour, when the hourly allowance refills. */
+  hourEndsAt: number;
+  dayEndsAt: number;
 };
 
 export type BlockStats = {
@@ -63,8 +89,8 @@ export type NativeStatus = AndroidStatus | IOSStatus;
 export type BlockedEvent = {
   app: AppKey;
   feature: 'shorts' | 'reels';
-  /** tab: opened the feed tab · player: full-screen player · swipe/limit: past a shared one */
-  trigger: 'tab' | 'player' | 'swipe' | 'limit';
+  /** tab: opened the feed tab · player: full-screen player · swipe/limit: past a shared one · quota: time ran out mid-feed */
+  trigger: 'tab' | 'player' | 'swipe' | 'limit' | 'quota';
   method: 'exitTab' | 'back' | 'home';
   at: number;
   todayTotal: number;

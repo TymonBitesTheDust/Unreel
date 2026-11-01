@@ -86,6 +86,15 @@ The two platforms allow fundamentally different things, so the app uses a differ
 - **Android 13+ sideloads:** the toggle is greyed out ("Restricted setting") until the user opens *App info → ⋮ → Allow restricted settings*. The setup screen links there.
 - **Advanced Protection Mode:** Android 17 extends it so that, when switched on, the system revokes and refuses accessibility access for apps that aren't accessibility tools. There's no workaround; the dashboard will show the service as not running. Explain it in support docs.
 
+**Time limits** (`data/Quota.kt`, `data/QuotaStore.kt`, the *Time limits* part of the service)
+
+For people who can't quit all at once: with `quotaEnabled`, the feed plays while there's time left today (`quotaDailyMinutes`, default 60) **and** in the current clock hour (`quotaHourlyMinutes`, default 10). YouTube and Instagram share one allowance. Once either runs out, blocking works exactly as it does without limits, with "Time's up" wording on the card.
+
+- **Counting.** While the feed is allowed, a `Watch` adds up `elapsedRealtime` between checks. Content-change scans (slowed to one a second while watching) and a re-check every 5 s both count; the re-check is what notices the user leaving the app or switching the screen off (`PowerManager.isInteractive`), since neither produces events from the watched packages. Gaps over 10 s are capped (the phone slept). Time is written to `QuotaStore` every 10 s and when the feed closes.
+- **Running out.** The re-check is scheduled for exactly when the time ends, so the feed closes on time, not up to 5 s late. Running out mid-feed blocks at once (trigger `quota`), without the one-shared-video grace a fresh visit gets, so a reel opened from a DM can't be swiped past the limit. A toast warns about a minute before.
+- **Clock.** Hours are local clock hours (14:00–15:00) and days local calendar days. A session across 14:59–15:01 is split between both hours. Hour starts are computed from the UTC offset at that instant, so the repeated hour when clocks go back counts as a separate hour.
+- **Storage.** `QuotaLedger` keeps only the current day and hour. It always moves to the newest segment's day, even backwards, so setting the phone's clock back yields one fresh allowance rather than uncounted watching. "Reset numbers" doesn't touch it.
+
 ### 1.2 iOS
 
 **The hard limit:** iOS apps can't read or control another app's UI. There's no accessibility-service equivalent for third parties, no way to inspect Instagram's view hierarchy, and no way to inject into it. **In-app, Reels-only blocking is not possible on iOS.** Anything claiming otherwise is either locking the whole app or working on the website.
@@ -179,7 +188,7 @@ unreel/
 │   │   │   ├── service/ViewIdDiagnostics.kt      Debug-only view-ID logging
 │   │   │   ├── detection/                        Rules model, parser, repository, detector, tree adapter
 │   │   │   ├── intervention/                     Navigator (Home/Back/escalation), overlay card
-│   │   │   └── data/                             Config prefs, daily stats, in-process event bus
+│   │   │   └── data/                             Config prefs, daily stats, time limits, in-process event bus
 │   │   └── src/test/.../ShortFormDetectorTest.kt JVM tests with fake trees
 │   └── ios/
 │       ├── UnreelBlockerModule.swift             JS bridge: auth, picker, config, stats
@@ -224,7 +233,7 @@ User opens Instagram ──► shield-config extension ──► counter++ in Ap
 
 ### 3.3 Friction
 
-Every *loosening* change — turn off, pause, stop blocking an app, allow shared videos, switch iOS to an allowance or raise it, shorten the delay, remove the PIN — goes through one gate (`src/state/FrictionProvider.tsx`):
+Every *loosening* change — turn off, pause, stop blocking an app, allow shared videos, turn on Android time limits or raise one, switch iOS to an allowance or raise it, shorten the delay, remove the PIN — goes through one gate (`src/state/FrictionProvider.tsx`):
 
 ```
 tap ──► PIN (if set; 5 tries, then 5-minute lockout) ──► wait unlock delay (default 5 min)
@@ -253,6 +262,9 @@ Tightening changes apply immediately. The pending request is persisted, so killi
 | Sideloaded on Android 13+ | Toggle greyed out | Setup links to App info with the "Allow restricted settings" instructions |
 | Advanced Protection on | Android revokes the service | Surfaces as "not running"; document it, don't fake `isAccessibilityTool` |
 | Shared reel used as a loophole | Endless swiping from a DM | Pager scroll = block; 3-minute cap |
+| Time limits: user leaves the app or turns the screen off mid-feed | No event arrives, so the count would run on | 5-second re-check of the window list and `isInteractive` stops the count |
+| Time limits: phone clock changed | Fresh allowance | At most one fresh allowance per change (ledger follows the newest day/hour, unit-tested). Like revoking Accessibility, a deliberate act a normal app can't prevent |
+| Time limits: service killed mid-feed | Unsaved time lost | Written every 10 s, so at most 10 s goes uncounted |
 | User disables the service or uninstalls | Blocking ends | Can't be prevented by a normal app. Options for a "strict mode": Device Admin to slow uninstall, or watching the Settings app's Unreel pages — both add Play-policy and support burden; left out deliberately |
 | **iOS: Family Controls entitlement** | TestFlight builds fail to sign | Request distribution approval early; all extensions need it |
 | iOS: missing App Group | Extensions can't read config | Derived from bundle ID (`group.<bundle id>`), mirrored into targets by apple-targets; status reports `appGroupReachable` |
@@ -287,6 +299,7 @@ npm run test:android       # after `npm run prebuild`: JVM tests for detection
 
 - Android: Shorts tab → lands on Home; Short from the home shelf (allowance on/off); Short from a shared link then swipe; Reels tab; reel from a DM then swipe; Stories untouched; feed inline video untouched; comments sheet open over a reel; split screen; dark mode; a second locale.
 - Android: toggle the service off in Settings and check the dashboard; force-stop and relaunch; reinstall.
+- Android time limits: set 15 min a day / 5 min an hour; scroll Reels until the one-minute toast, then the "Time's up for this hour" card; leave and come back after the hour; press Home mid-feed and check the meter stops; lock the screen mid-feed; reel from a DM after the time is up (one plays, swiping blocks).
 - iOS: authorize, pick both apps, open each; allowance mode with a 1-minute budget; pause 15 minutes and wait it out with the app closed; midnight rollover; revoke access in Settings.
 - Safari: `youtube.com/shorts/<id>` opens `/watch`; in-site navigation to Shorts bounces; Instagram `/reels/` bounces to home, `/reel/<id>` opens as a post.
 

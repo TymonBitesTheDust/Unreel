@@ -23,6 +23,23 @@ export function countdown(ms: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/** "10 minutes", "1 hour", "90 minutes", "2 hours". */
+export function minutesLabel(minutes: number): string {
+  if (minutes === 60) return '1 hour';
+  if (minutes > 0 && minutes % 60 === 0) return `${minutes / 60} hours`;
+  return minutes === 1 ? '1 minute' : `${minutes} minutes`;
+}
+
+/** Segment labels: "10 min", "1 hour", "2 hours". */
+export function shortMinutes(minutes: number): string {
+  return minutes >= 60 && minutes % 60 === 0 ? minutesLabel(minutes) : `${minutes} min`;
+}
+
+/** Time left, rounded up so the last seconds still read "1 min". */
+export function minutesLeft(ms: number): string {
+  return `${Math.ceil(Math.max(0, ms) / MINUTE)} min`;
+}
+
 export function durationLabel(seconds: number): string {
   if (seconds === 0) return 'No delay';
   if (seconds < 60) return `${seconds} s`;

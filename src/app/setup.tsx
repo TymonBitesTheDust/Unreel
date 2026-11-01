@@ -35,7 +35,8 @@ function AndroidSetup({ status }: { status: Blocker.AndroidStatus }) {
         <Row first title="Watches only YouTube and Instagram" subtitle="Android doesn’t send Unreel anything from other apps." />
         <Row title="Reads the names of on-screen layout elements" subtitle="For example, whether the Reels tab is selected. Not your messages, captions or typing." />
         <Row title="Presses Back or taps Home for you" subtitle="Only when the Shorts or Reels feed is on screen." />
-        <Row title="Keeps everything on this phone" subtitle="Block counts stay on the device. Nothing about your use is sent anywhere." />
+        <Row title="Times Shorts and Reels, if you set a time limit" subtitle="How long they stay on screen, so it knows when your time is up." />
+        <Row title="Keeps everything on this phone" subtitle="Block counts and time used stay on the device. Nothing about your use is sent anywhere." />
       </Group>
 
       {done ? (

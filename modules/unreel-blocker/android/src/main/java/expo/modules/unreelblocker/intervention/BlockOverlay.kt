@@ -33,9 +33,12 @@ class BlockOverlay(private val service: AccessibilityService) {
   private var view: View? = null
   private val autoDismiss = Runnable { hide() }
 
-  fun show(app: String, todayTotal: Int) {
+  /** Replaces the default "Reels are blocked" wording, e.g. when a time limit ran out. */
+  data class Message(val title: String, val body: String)
+
+  fun show(app: String, todayTotal: Int, message: Message? = null) {
     hide()
-    val root = buildView(app, todayTotal)
+    val root = buildView(app, todayTotal, message)
     val params = WindowManager.LayoutParams(
       WindowManager.LayoutParams.MATCH_PARENT,
       WindowManager.LayoutParams.MATCH_PARENT,
@@ -66,19 +69,19 @@ class BlockOverlay(private val service: AccessibilityService) {
     }
   }
 
-  private fun buildView(app: String, todayTotal: Int): View {
+  private fun buildView(app: String, todayTotal: Int, message: Message?): View {
     val ctx = service
     val titleRes = if (app == "youtube") R.string.unreel_overlay_title_youtube else R.string.unreel_overlay_title_instagram
 
     val title = TextView(ctx).apply {
-      text = ctx.getString(titleRes)
+      text = message?.title ?: ctx.getString(titleRes)
       setTextColor(ON_BRAND)
       setTextSize(TypedValue.COMPLEX_UNIT_SP, 30f)
       typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
       gravity = Gravity.CENTER
     }
     val body = TextView(ctx).apply {
-      text = ctx.getString(R.string.unreel_overlay_body)
+      text = message?.body ?: ctx.getString(R.string.unreel_overlay_body)
       setTextColor(ON_BRAND_MUTED)
       setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
       gravity = Gravity.CENTER

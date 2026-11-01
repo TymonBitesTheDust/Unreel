@@ -47,7 +47,7 @@ export default function Settings() {
 
       <Group
         title="Make it harder to give in"
-        footer="Turning blocking off, pausing it, allowing an app, removing the PIN or shortening the delay all go through these steps."
+        footer="Turning blocking off, pausing it, allowing an app, turning on or raising a time limit, removing the PIN or shortening the delay all go through these steps."
       >
         {friction.hasPin ? (
           <Row

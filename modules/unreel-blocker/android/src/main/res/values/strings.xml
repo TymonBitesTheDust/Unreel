@@ -2,7 +2,7 @@
 <resources>
   <string name="unreel_accessibility_label">Unreel – Shorts &amp; Reels blocker</string>
   <!-- Shown by Android on the accessibility settings page. Keep it plain and specific: Play reviewers read it. -->
-  <string name="unreel_accessibility_description">Unreel watches only YouTube and Instagram. When the Shorts or Reels feed appears on screen, it takes you back to the main feed. It reads the names of on-screen layout elements to recognise those feeds; it does not read your messages, typing or video content, and nothing leaves your phone.</string>
+  <string name="unreel_accessibility_description">Unreel watches only YouTube and Instagram. When the Shorts or Reels feed appears on screen, it takes you back to the main feed, or, if you set a time limit, once that time is used up. It reads the names of on-screen layout elements to recognise those feeds and times how long they stay open; it does not read your messages, typing or video content, and nothing leaves your phone.</string>
 
   <string name="unreel_overlay_title_youtube">Shorts are blocked</string>
   <string name="unreel_overlay_title_instagram">Reels are blocked</string>
@@ -10,4 +10,14 @@
   <string name="unreel_overlay_count">%1$d stopped today</string>
   <string name="unreel_overlay_button">Back to what I was doing</string>
   <string name="unreel_toast_blocked">Unreel blocked %1$s</string>
+
+  <!-- Time limits. %1$s is a duration such as "10 minutes" or "1 hour"; %2$s a time such as "3:00 PM". -->
+  <string name="unreel_quota_title_hour">Time’s up for this hour</string>
+  <string name="unreel_quota_title_day">Time’s up for today</string>
+  <string name="unreel_quota_body_hour">You’ve had this hour’s %1$s of Shorts and Reels. More at %2$s.</string>
+  <string name="unreel_quota_body_day">You’ve had today’s %1$s of Shorts and Reels. More tomorrow.</string>
+  <string name="unreel_quota_toast_hour">Time’s up for this hour. More at %1$s.</string>
+  <string name="unreel_quota_toast_day">Time’s up for today. More tomorrow.</string>
+  <string name="unreel_quota_warn_hour">About a minute of Shorts and Reels left this hour</string>
+  <string name="unreel_quota_warn_day">About a minute of Shorts and Reels left today</string>
 </resources>

@@ -10,7 +10,14 @@ import java.util.UUID
  * Same rules as src/lib/friction.ts in the Expo app.
  */
 data class Change(val kind: Kind, val arg: Long = 0, val label: String) {
-  enum class Kind { DISABLE, PAUSE_MINUTES, PAUSE_UNTIL_MIDNIGHT, TARGET_OFF_YOUTUBE, TARGET_OFF_INSTAGRAM, ALLOW_SHARED, LOWER_DELAY, REMOVE_PIN }
+  enum class Kind {
+    DISABLE, PAUSE_MINUTES, PAUSE_UNTIL_MIDNIGHT, TARGET_OFF_YOUTUBE, TARGET_OFF_INSTAGRAM, ALLOW_SHARED, LOWER_DELAY, REMOVE_PIN,
+    /** Switch from blocking straight away to time limits. */
+    QUOTA_ON,
+    /** [arg]: the new limit in minutes. */
+    RAISE_DAILY_LIMIT,
+    RAISE_HOURLY_LIMIT,
+  }
 
   fun toJson(): JSONObject = JSONObject().put("kind", kind.name).put("arg", arg).put("label", label)
 
