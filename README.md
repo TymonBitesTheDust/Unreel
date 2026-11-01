@@ -75,6 +75,10 @@ What the Android app does:
 - **Android:** see [Android help](docs/ANDROID-HELP.md#troubleshooting).
 - **iPhone, the YouTube or Instagram app opens instead of the website:** the app is still installed. Delete it, or type the address into Safari yourself.
 
+## Also in this repository: RoadWatch
+
+**[RoadWatch](roadwatch/README.md)** is a separate navigation app: a Google map that shows police, speed cameras and traffic cameras, and warns you 200 metres before each one with a sound, a spoken warning and a notification, while you drive with Google Maps or Waze.
+
 ## For developers
 
 How to build, test and publish: [docs/DEVELOPING.md](docs/DEVELOPING.md). Design and platform limits: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Licences: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
