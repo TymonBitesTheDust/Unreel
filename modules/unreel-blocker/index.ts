@@ -9,6 +9,7 @@ import type {
   ConfigPatch,
   IOSStatus,
   NativeStatus,
+  QuotaStatus,
   RulesInfo,
   SelectionSummary,
 } from './src/UnreelBlocker.types';
@@ -32,6 +33,9 @@ export const DEFAULT_CONFIG: BlockerConfig = {
   instagramReels: true,
   allowSharedReels: true,
   interstitial: true,
+  quotaEnabled: false,
+  quotaDailyMinutes: 60,
+  quotaHourlyMinutes: 10,
   iosMode: 'always',
   dailyBudgetMinutes: 15,
 };
@@ -94,6 +98,10 @@ export const android = {
   },
   resetRules(): RulesInfo | null {
     return native().resetRules?.() ?? null;
+  },
+  /** Time-limit use; null on iOS, where the feeds can't be timed. */
+  getQuota(): QuotaStatus | null {
+    return native().getQuota?.() ?? null;
   },
   status(status: NativeStatus | null): AndroidStatus | null {
     return status?.platform === 'android' ? status : null;

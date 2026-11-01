@@ -11,6 +11,7 @@ import expo.modules.kotlin.records.Record
 import expo.modules.unreelblocker.data.BlockEventBus
 import expo.modules.unreelblocker.data.BlockerConfig
 import expo.modules.unreelblocker.data.BlockerPrefs
+import expo.modules.unreelblocker.data.QuotaStore
 import expo.modules.unreelblocker.data.StatsStore
 import expo.modules.unreelblocker.detection.RulesRepository
 import expo.modules.unreelblocker.service.ServiceStatus
@@ -24,6 +25,9 @@ class ConfigPatch : Record {
   @Field val allowSharedReels: Boolean? = null
   @Field val interstitial: Boolean? = null
   @Field val pausedUntil: Double? = null
+  @Field val quotaEnabled: Boolean? = null
+  @Field val quotaDailyMinutes: Int? = null
+  @Field val quotaHourlyMinutes: Int? = null
 }
 
 class InvalidRulesException(message: String) : CodedException("ERR_INVALID_RULES", message, null)
@@ -41,6 +45,7 @@ class UnreelBlockerModule : Module() {
 
   private val prefs by lazy { BlockerPrefs(context) }
   private val stats by lazy { StatsStore(context) }
+  private val quota by lazy { QuotaStore(context) }
   private val rules by lazy { RulesRepository(context) }
 
   private var stopBlocked: (() -> Unit)? = null
@@ -107,6 +112,9 @@ class UnreelBlockerModule : Module() {
         allowSharedReels = patch.allowSharedReels ?: current.allowSharedReels,
         interstitial = patch.interstitial ?: current.interstitial,
         pausedUntil = patch.pausedUntil?.toLong() ?: current.pausedUntil,
+        quotaEnabled = patch.quotaEnabled ?: current.quotaEnabled,
+        quotaDailyMinutes = patch.quotaDailyMinutes ?: current.quotaDailyMinutes,
+        quotaHourlyMinutes = patch.quotaHourlyMinutes ?: current.quotaHourlyMinutes,
       )
       prefs.write(next)
       next.toMap()
@@ -122,6 +130,9 @@ class UnreelBlockerModule : Module() {
     }
 
     Function("resetStats") { stats.reset() }
+
+    /** Today's and this hour's use of the time limits. Time is only counted while they're on. */
+    Function("getQuota") { quota.status(prefs.read().quotaLimits).toMap() }
 
     /** Installs a newer rules document (e.g. fetched from your server). Throws if invalid. */
     Function("updateRules") { json: String ->

@@ -5,6 +5,7 @@ import type {
   BlockerConfig,
   ConfigPatch,
   NativeStatus,
+  QuotaStatus,
   RulesInfo,
   SelectionSummary,
   UnreelBlockerEvents,
@@ -29,6 +30,8 @@ export declare class UnreelBlockerNativeModule extends NativeModule<UnreelBlocke
   updateRules?(json: string): RulesInfo;
   /** (android) */
   resetRules?(): RulesInfo;
+  /** (android) */
+  getQuota?(): QuotaStatus;
 
   /** (ios) */
   requestAuthorization?(): Promise<string>;

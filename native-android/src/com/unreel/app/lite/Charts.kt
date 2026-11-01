@@ -135,3 +135,33 @@ class WeekChartView(context: Context, private val p: Palette) : View(context) {
     ""
   }
 }
+
+/** A slim rounded bar for a time limit: [fraction] of the track filled, red once it's used up. */
+class MeterView(context: Context, private val p: Palette) : View(context) {
+  var fraction: Float = 0f
+    set(value) {
+      field = value.coerceIn(0f, 1f)
+      invalidate()
+    }
+
+  private val density = resources.displayMetrics.density
+  private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+  init {
+    importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO // The row describes it in words.
+  }
+
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), (8 * density).toInt())
+  }
+
+  override fun onDraw(canvas: Canvas) {
+    val h = height.toFloat()
+    val r = h / 2
+    paint.color = p.line
+    canvas.drawRoundRect(RectF(0f, 0f, width.toFloat(), h), r, r, paint)
+    if (fraction <= 0f) return
+    paint.color = if (fraction >= 1f) p.danger else p.brand
+    canvas.drawRoundRect(RectF(0f, 0f, max(h, width * fraction), h), r, r, paint)
+  }
+}

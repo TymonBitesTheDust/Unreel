@@ -52,6 +52,7 @@ What the Android app does:
 
 - **Blocks the feed, not the app.** Opening the Shorts or Reels tab takes you back to Home. One video a friend sends you still plays; swiping to the next is blocked.
 - **Gives you a moment to think** with a short pause card, and **counts** what it stopped today and this week.
+- **Or allows a little each day,** if quitting all at once is too hard. Turn on **Time limits** and Shorts and Reels play for up to 1 hour a day and 10 minutes in each hour (you choose the amounts; YouTube and Instagram share them). When the time is up, they're blocked until the next hour, or until tomorrow. Lowering a limit works straight away; raising one waits like any other loosening.
 - **Makes giving in harder:** turning blocking off or loosening a setting waits behind an optional PIN and a 5-minute delay. Pauses end by themselves.
 
 <p align="center">

@@ -8,7 +8,8 @@ data class BlockEvent(
   val feature: String,
   /**
    * "tab" (opened the feed tab), "player" (full-screen player, shared allowance off),
-   * "swipe" (swiped past a shared one) or "limit" (stayed on a shared one too long).
+   * "swipe" (swiped past a shared one), "limit" (stayed on a shared one too long) or "quota"
+   * (the time limit ran out while the user was in the feed).
    */
   val trigger: String,
   /** How we left the feed: "exitTab" (clicked Home) or "back". */

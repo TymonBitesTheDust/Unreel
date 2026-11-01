@@ -6,10 +6,11 @@ import type { BlockerConfig, ConfigPatch } from './blocker';
 /**
  * Friction: the things that stand between an impulse and turning the blocker off.
  *
- * Any *loosening* change (turn off, pause, stop blocking one app, shorten the delay, remove the
- * PIN) goes through the same gate:
+ * Any *loosening* change (turn off, pause, stop blocking one app, turn on or raise a time limit,
+ * shorten the delay, remove the PIN) goes through the same gate:
  *   PIN (if set)  →  wait `unlockDelaySec`  →  confirm within CONFIRM_WINDOW_MS  →  applied.
- * Tightening changes (turn on, add an app, lengthen the delay) apply immediately.
+ * Tightening changes (turn on, add an app, lower or turn off a time limit, lengthen the delay)
+ * apply immediately.
  *
  * Threat model, stated honestly: this protects the user from their own impulses, not from a
  * determined attacker. Someone can always revoke the system permission in Settings; the PIN hash
@@ -177,6 +178,10 @@ export function isLoosening(patch: ConfigPatch, current: BlockerConfig): boolean
 
   if (turnsOff('enabled') || turnsOff('youtubeShorts') || turnsOff('instagramReels')) return true;
   if (patch.allowSharedReels === true && !current.allowSharedReels) return true;
+  if (patch.quotaEnabled === true && !current.quotaEnabled) return true;
+  const quotaOn = patch.quotaEnabled ?? current.quotaEnabled;
+  if (quotaOn && patch.quotaDailyMinutes !== undefined && patch.quotaDailyMinutes > current.quotaDailyMinutes) return true;
+  if (quotaOn && patch.quotaHourlyMinutes !== undefined && patch.quotaHourlyMinutes > current.quotaHourlyMinutes) return true;
   if (patch.pausedUntil !== undefined && patch.pausedUntil > Math.max(current.pausedUntil, Date.now())) return true;
   if (patch.iosMode === 'budget' && current.iosMode === 'always') return true;
   if (

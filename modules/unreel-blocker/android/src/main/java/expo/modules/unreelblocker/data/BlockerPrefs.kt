@@ -18,8 +18,17 @@ data class BlockerConfig(
   val interstitial: Boolean = true,
   /** Epoch ms. Blocking is suspended until then. Enforced natively so it survives app kills. */
   val pausedUntil: Long = 0L,
+  /**
+   * Time limits: let the feeds play until [quotaDailyMinutes] a day or [quotaHourlyMinutes] in
+   * the current clock hour are used up, then block as usual. See [QuotaStatus].
+   */
+  val quotaEnabled: Boolean = false,
+  val quotaDailyMinutes: Int = QuotaLimits.DEFAULT_DAILY_MINUTES,
+  val quotaHourlyMinutes: Int = QuotaLimits.DEFAULT_HOURLY_MINUTES,
 ) {
   fun isActiveNow(nowMs: Long = System.currentTimeMillis()): Boolean = enabled && nowMs >= pausedUntil
+
+  val quotaLimits: QuotaLimits get() = QuotaLimits(quotaDailyMinutes, quotaHourlyMinutes)
 
   /** Unknown keys (a target added by a remote rules push) stay off until the user opts in. */
   fun isTargetEnabled(configKey: String): Boolean = when (configKey) {
@@ -35,6 +44,9 @@ data class BlockerConfig(
     "allowSharedReels" to allowSharedReels,
     "interstitial" to interstitial,
     "pausedUntil" to pausedUntil.toDouble(),
+    "quotaEnabled" to quotaEnabled,
+    "quotaDailyMinutes" to quotaDailyMinutes,
+    "quotaHourlyMinutes" to quotaHourlyMinutes,
   )
 
   companion object {
@@ -54,6 +66,9 @@ class BlockerPrefs(context: Context) {
     allowSharedReels = sp.getBoolean(K_ALLOW_SHARED, true),
     interstitial = sp.getBoolean(K_INTERSTITIAL, true),
     pausedUntil = sp.getLong(K_PAUSED_UNTIL, 0L),
+    quotaEnabled = sp.getBoolean(K_QUOTA_ENABLED, false),
+    quotaDailyMinutes = sp.getInt(K_QUOTA_DAILY, QuotaLimits.DEFAULT_DAILY_MINUTES).coerceIn(1, QuotaLimits.MAX_DAILY_MINUTES),
+    quotaHourlyMinutes = sp.getInt(K_QUOTA_HOURLY, QuotaLimits.DEFAULT_HOURLY_MINUTES).coerceIn(1, QuotaLimits.MAX_HOURLY_MINUTES),
   )
 
   fun write(config: BlockerConfig) {
@@ -64,6 +79,9 @@ class BlockerPrefs(context: Context) {
       .putBoolean(K_ALLOW_SHARED, config.allowSharedReels)
       .putBoolean(K_INTERSTITIAL, config.interstitial)
       .putLong(K_PAUSED_UNTIL, config.pausedUntil)
+      .putBoolean(K_QUOTA_ENABLED, config.quotaEnabled)
+      .putInt(K_QUOTA_DAILY, config.quotaDailyMinutes.coerceIn(1, QuotaLimits.MAX_DAILY_MINUTES))
+      .putInt(K_QUOTA_HOURLY, config.quotaHourlyMinutes.coerceIn(1, QuotaLimits.MAX_HOURLY_MINUTES))
       .apply()
   }
 
@@ -91,13 +109,16 @@ class BlockerPrefs(context: Context) {
     private const val K_ALLOW_SHARED = "allowSharedReels"
     private const val K_INTERSTITIAL = "interstitial"
     private const val K_PAUSED_UNTIL = "pausedUntil"
+    private const val K_QUOTA_ENABLED = "quotaEnabled"
+    private const val K_QUOTA_DAILY = "quotaDailyMinutes"
+    private const val K_QUOTA_HOURLY = "quotaHourlyMinutes"
     private const val K_LAST_EVENT = "lastEventAt"
     const val K_RULES_EPOCH = "rulesEpoch"
 
     /** Keys whose change should make the service re-read its config. */
     val CONFIG_KEYS = setOf(
       K_ENABLED, BlockerConfig.KEY_YOUTUBE_SHORTS, BlockerConfig.KEY_INSTAGRAM_REELS,
-      K_ALLOW_SHARED, K_INTERSTITIAL, K_PAUSED_UNTIL,
+      K_ALLOW_SHARED, K_INTERSTITIAL, K_PAUSED_UNTIL, K_QUOTA_ENABLED, K_QUOTA_DAILY, K_QUOTA_HOURLY,
     )
   }
 }

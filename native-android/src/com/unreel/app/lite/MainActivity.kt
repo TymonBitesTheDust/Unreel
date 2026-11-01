@@ -26,6 +26,10 @@ import android.widget.Toast
 import expo.modules.unreelblocker.data.BlockEventBus
 import expo.modules.unreelblocker.data.BlockerConfig
 import expo.modules.unreelblocker.data.BlockerPrefs
+import expo.modules.unreelblocker.data.QuotaExhausted
+import expo.modules.unreelblocker.data.QuotaLimits
+import expo.modules.unreelblocker.data.QuotaStatus
+import expo.modules.unreelblocker.data.QuotaStore
 import expo.modules.unreelblocker.data.StatsStore
 import expo.modules.unreelblocker.detection.RulesRepository
 import expo.modules.unreelblocker.service.ServiceStatus
@@ -38,8 +42,8 @@ import kotlin.math.ceil
 /**
  * Native dashboard for the standalone Android build. Same behaviour as the Expo app's
  * src/app/index.tsx + settings.tsx: status and master switch, today's blocks, the week, what to
- * block, and the friction gate (PIN → unlock delay → confirm) in front of anything that loosens
- * blocking.
+ * block, time limits, and the friction gate (PIN → unlock delay → confirm) in front of anything
+ * that loosens blocking.
  *
  * Framework widgets only (no AndroidX), so it builds with nothing but aapt2, kotlinc and dx.
  */
@@ -48,6 +52,7 @@ class MainActivity : Activity() {
   private lateinit var p: Palette
   private lateinit var prefs: BlockerPrefs
   private lateinit var stats: StatsStore
+  private lateinit var quota: QuotaStore
   private lateinit var friction: FrictionStore
   private lateinit var scroll: ScrollView
   private lateinit var content: LinearLayout
@@ -63,6 +68,8 @@ class MainActivity : Activity() {
   private var pendingText: TextView? = null
   private var confirmButton: TextView? = null
   private var pausedUntilShown = 0L
+  /** Next clock hour while time limits are on: the hourly allowance refills then. */
+  private var quotaRefreshAt = 0L
 
   private val ticker = object : Runnable {
     override fun run() {
@@ -78,6 +85,7 @@ class MainActivity : Activity() {
     p = Palette.from(resources)
     prefs = BlockerPrefs(this)
     stats = StatsStore(this)
+    quota = QuotaStore(this)
     friction = FrictionStore(this)
     displayFace = font("fonts/BarlowCondensed_600SemiBold.ttf")
     displayBoldFace = font("fonts/BarlowCondensed_700Bold.ttf")
@@ -153,9 +161,11 @@ class MainActivity : Activity() {
     val days = stats.lastDays(7)
     val today = days.last()
     pausedUntilShown = if (cfg.pausedUntil > now) cfg.pausedUntil else 0L
+    val allowance = quota.status(cfg.quotaLimits, now)
+    quotaRefreshAt = if (cfg.quotaEnabled) allowance.hourEndsAt else 0L
 
     content.addView(text("Unreel", 30f, p.ink, displayBoldFace), margins(bottom = 16))
-    content.addView(hero(cfg, ready, today, now))
+    content.addView(hero(cfg, ready, today, now, allowance))
 
     friction.pending(now)?.let { content.addView(pendingCard(it), margins(top = 16)) }
 
@@ -212,6 +222,8 @@ class MainActivity : Activity() {
     )
     footer("Feed posts, Stories, messages, search and long videos keep working.")
 
+    timeLimits(cfg, allowance)
+
     section("Make it harder to give in")
     group(
       if (friction.hasPin) {
@@ -223,7 +235,7 @@ class MainActivity : Activity() {
       },
       delayPicker(),
     )
-    footer("Turning blocking off, pausing it, allowing an app, removing the PIN or shortening the delay all go through these steps.")
+    footer("Turning blocking off, pausing it, allowing an app, turning on or raising a time limit, removing the PIN or shortening the delay all go through these steps.")
 
     section("Blocking on this phone")
     val rules = try {
@@ -267,13 +279,13 @@ class MainActivity : Activity() {
   }
 
   /** The status block: what's happening, the master switch, and today's crossed-out frames. */
-  private fun hero(cfg: BlockerConfig, ready: Boolean, today: StatsStore.DayStats, now: Long): View {
+  private fun hero(cfg: BlockerConfig, ready: Boolean, today: StatsStore.DayStats, now: Long, allowance: QuotaStatus): View {
     val box = vertical().apply {
       background = rounded(p.brand, 28)
       setPadding(dp(24), dp(24), dp(24), dp(24))
     }
     val active = cfg.isActiveNow(now)
-    val (title, detail) = describe(cfg, ready, now)
+    val (title, detail) = describe(cfg, ready, now, allowance)
 
     val top = horizontal().apply { gravity = Gravity.CENTER_VERTICAL }
     val titles = vertical()
@@ -311,14 +323,29 @@ class MainActivity : Activity() {
     return box
   }
 
-  private fun describe(cfg: BlockerConfig, ready: Boolean, now: Long): Pair<String, String> = when {
+  private fun describe(cfg: BlockerConfig, ready: Boolean, now: Long, allowance: QuotaStatus): Pair<String, String> = when {
     !ready -> "Not blocking yet" to "Setup isn’t finished."
     !cfg.enabled -> "Blocking is off" to "Turn it on to stop Shorts and Reels again."
     cfg.pausedUntil > now -> "Paused until ${clock(cfg.pausedUntil)}" to "Blocking comes back on by itself."
+    !cfg.youtubeShorts && !cfg.instagramReels -> "Nothing to block" to "Both apps are switched off below."
+    cfg.quotaEnabled -> describeAllowance(cfg, allowance)
     cfg.youtubeShorts && cfg.instagramReels -> "Blocking is on" to "Shorts and Reels close as soon as they open."
     cfg.youtubeShorts -> "Blocking YouTube Shorts" to "Instagram Reels are allowed."
-    cfg.instagramReels -> "Blocking Instagram Reels" to "YouTube Shorts are allowed."
-    else -> "Nothing to block" to "Both apps are switched off below."
+    else -> "Blocking Instagram Reels" to "YouTube Shorts are allowed."
+  }
+
+  private fun describeAllowance(cfg: BlockerConfig, a: QuotaStatus): Pair<String, String> {
+    val feeds = when {
+      cfg.youtubeShorts && cfg.instagramReels -> "Shorts and Reels"
+      cfg.youtubeShorts -> "Shorts"
+      else -> "Reels"
+    }
+    return when (a.exhausted) {
+      QuotaExhausted.DAY -> "Today’s time is used up" to "$feeds are blocked until tomorrow."
+      QuotaExhausted.HOUR -> "This hour’s time is used up" to "More at ${clock(a.hourEndsAt)}. ${minutesLeft(a.leftTodayMs)} left today."
+      null -> "${minutesLeft(a.leftTodayMs)} left today" to
+        "Up to ${shortMinutes(a.limits.hourlyMinutes)} each hour, ${minutesLeft(a.leftMs)} left in this one. Then $feeds are blocked."
+    }
   }
 
   private fun appCount(label: String, value: Int): View = vertical().apply {
@@ -384,6 +411,9 @@ class MainActivity : Activity() {
       Change.Kind.ALLOW_SHARED -> save(cfg.copy(allowSharedReels = true))
       Change.Kind.LOWER_DELAY -> friction.delaySec = change.arg.toInt()
       Change.Kind.REMOVE_PIN -> friction.clearPin()
+      Change.Kind.QUOTA_ON -> save(cfg.copy(quotaEnabled = true))
+      Change.Kind.RAISE_DAILY_LIMIT -> save(cfg.copy(quotaDailyMinutes = change.arg.toInt()))
+      Change.Kind.RAISE_HOURLY_LIMIT -> save(cfg.copy(quotaHourlyMinutes = change.arg.toInt()))
     }
     Toast.makeText(this, "Done: ${change.label}", Toast.LENGTH_SHORT).show()
   }
@@ -412,10 +442,10 @@ class MainActivity : Activity() {
     return card
   }
 
-  /** Every second: countdowns, expiry of a pending change, and the end of a pause. */
+  /** Every second: countdowns, expiry of a pending change, the end of a pause and of an hour. */
   private fun tick() {
     val now = System.currentTimeMillis()
-    if (pausedUntilShown in 1..now) {
+    if (pausedUntilShown in 1..now || quotaRefreshAt in 1..now) {
       render()
       return
     }
@@ -500,36 +530,130 @@ class MainActivity : Activity() {
   }
 
   private fun delayPicker(): View {
+    val current = friction.delaySec
+    return pickerRow(
+      "Unlock delay",
+      "How long to wait before a change that loosens blocking takes effect.",
+      FrictionStore.DELAY_OPTIONS_SEC.toList(),
+      current,
+      { delayLabel(it) },
+    ) { seconds ->
+      if (seconds > current) {
+        friction.delaySec = seconds
+        render()
+      } else {
+        requestLoosening(Change(Change.Kind.LOWER_DELAY, seconds.toLong(), "Shorten the unlock delay to ${delayLabel(seconds).lowercase()}"))
+      }
+    }
+  }
+
+  // ---- Time limits ---------------------------------------------------------------------------
+
+  /**
+   * For people who can't quit all at once: Shorts and Reels play until today's or this hour's
+   * time is used up, then they're blocked as usual. Turning this on or raising a limit loosens
+   * blocking, so it waits behind the PIN and delay; lowering a limit or turning it off doesn't.
+   */
+  private fun timeLimits(cfg: BlockerConfig, allowance: QuotaStatus) {
+    section("Time limits")
+    val daily = cfg.quotaDailyMinutes
+    val hourly = cfg.quotaHourlyMinutes
+    val toggle = switchRow(
+      "Allow a little each day",
+      if (cfg.quotaEnabled) {
+        "Shorts and Reels play until your time runs out, then they’re blocked."
+      } else {
+        "Quitting all at once is hard. Start with ${QuotaLimits.label(daily)} a day, up to ${QuotaLimits.label(hourly)} each hour, and lower it as you go."
+      },
+      cfg.quotaEnabled,
+      first = true,
+    ) { on ->
+      if (on) {
+        requestLoosening(Change(Change.Kind.QUOTA_ON, label = "Allow ${QuotaLimits.label(daily)} a day, up to ${QuotaLimits.label(hourly)} each hour"))
+      } else {
+        save(cfg.copy(quotaEnabled = false))
+      }
+    }
+    if (!cfg.quotaEnabled) {
+      group(toggle)
+      footer("Until your time runs out, Shorts and Reels play as usual. Then Unreel blocks them until the next hour, or until tomorrow.")
+      return
+    }
+
+    val dayNote = if (allowance.exhausted == QuotaExhausted.DAY) "Used up. More tomorrow." else null
+    val hourNote = if (allowance.exhausted == QuotaExhausted.HOUR) {
+      "Used up. More at ${clock(allowance.hourEndsAt)}."
+    } else {
+      "Starts again at ${clock(allowance.hourEndsAt)}."
+    }
+    group(
+      toggle,
+      meterRow("Today", allowance.usedTodayMs, daily, dayNote),
+      meterRow("This hour", allowance.usedThisHourMs, hourly, hourNote),
+      pickerRow("Each day", null, DAILY_LIMIT_OPTIONS, daily, { shortMinutes(it) }) { minutes ->
+        if (minutes < daily) {
+          save(cfg.copy(quotaDailyMinutes = minutes))
+        } else {
+          requestLoosening(Change(Change.Kind.RAISE_DAILY_LIMIT, minutes.toLong(), "Raise your daily limit to ${QuotaLimits.label(minutes)}"))
+        }
+      },
+      pickerRow("Each hour", null, HOURLY_LIMIT_OPTIONS, hourly, { shortMinutes(it) }) { minutes ->
+        if (minutes < hourly) {
+          save(cfg.copy(quotaHourlyMinutes = minutes))
+        } else {
+          requestLoosening(Change(Change.Kind.RAISE_HOURLY_LIMIT, minutes.toLong(), "Raise your hourly limit to ${QuotaLimits.label(minutes)}"))
+        }
+      },
+    )
+    footer("YouTube and Instagram share one allowance, and only time in Shorts or Reels counts. Lowering a limit applies at once; raising one waits like any other loosening.")
+  }
+
+  /** "Today · 22 of 60 min" over a bar. */
+  private fun meterRow(title: String, usedMs: Long, limitMinutes: Int, note: String?): View {
+    val usedMinutes = (usedMs / 60_000L).toInt().coerceIn(0, limitMinutes)
+    val box = vertical().apply {
+      setPadding(dp(16), dp(14), dp(16), dp(14))
+      background = topDivider()
+      importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+      contentDescription = "$title: $usedMinutes of $limitMinutes minutes used.${note?.let { " $it" } ?: ""}"
+    }
+    val top = horizontal().apply { gravity = Gravity.CENTER_VERTICAL }
+    top.addView(text(title, 16f, p.ink), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+    top.addView(text("$usedMinutes of $limitMinutes min", 14f, p.muted))
+    box.addView(top)
+    box.addView(MeterView(this, p).apply { fraction = usedMs / (limitMinutes * 60_000f) }, margins(top = 8))
+    note?.let { box.addView(text(it, 14f, p.muted), margins(top = 6)) }
+    return box
+  }
+
+  /** A titled segmented control in a group row. [onPick] runs only for a different value. */
+  private fun pickerRow(
+    title: String,
+    subtitle: String?,
+    options: List<Int>,
+    current: Int,
+    label: (Int) -> String,
+    onPick: (Int) -> Unit,
+  ): View {
     val box = vertical().apply {
       setPadding(dp(16), dp(14), dp(16), dp(16))
       background = topDivider()
     }
-    box.addView(text("Unlock delay", 16f, p.ink))
-    box.addView(text("How long to wait before a change that loosens blocking takes effect.", 14f, p.muted), margins(top = 2))
-    val current = friction.delaySec
+    box.addView(text(title, 16f, p.ink))
+    subtitle?.let { box.addView(text(it, 14f, p.muted), margins(top = 2)) }
     val segmented = horizontal().apply {
       background = rounded(p.background, 12, stroke = p.line, strokeDp = 1f)
       setPadding(dp(3), dp(3), dp(3), dp(3))
     }
-    for (seconds in FrictionStore.DELAY_OPTIONS_SEC) {
-      val selected = seconds == current
-      val option = text(delayLabel(seconds), 14f, if (selected) p.ink else p.muted, if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT).apply {
+    for (value in options) {
+      val selected = value == current
+      val option = text(label(value), 14f, if (selected) p.ink else p.muted, if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT).apply {
         gravity = Gravity.CENTER
         setPadding(0, dp(9), 0, dp(9))
         if (selected) background = rounded(p.surface, 9, stroke = p.line, strokeDp = 1f)
         isClickable = true
-        contentDescription = "Unlock delay ${delayLabel(seconds)}${if (selected) ", selected" else ""}"
-        setOnClickListener {
-          when {
-            seconds > current -> {
-              friction.delaySec = seconds
-              render()
-            }
-            seconds < current -> requestLoosening(
-              Change(Change.Kind.LOWER_DELAY, seconds.toLong(), "Shorten the unlock delay to ${delayLabel(seconds).lowercase()}"),
-            )
-          }
-        }
+        contentDescription = "$title ${label(value)}${if (selected) ", selected" else ""}"
+        setOnClickListener { if (value != current) onPick(value) }
       }
       segmented.addView(option, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
     }
@@ -549,6 +673,7 @@ class MainActivity : Activity() {
           "• It watches only YouTube and Instagram.\n" +
           "• It reads the names of on-screen layout elements, like whether the Reels tab is selected. Not your messages, captions or typing.\n" +
           "• It presses Back or taps Home for you, only when the Shorts or Reels feed is on screen.\n" +
+          "• If you set a time limit, it also times how long Shorts and Reels stay on screen.\n" +
           "• Everything stays on this phone.\n\n" +
           "In Settings, choose Unreel and switch it on. If the switch is greyed out, open App info, tap ⋮, then Allow restricted settings.",
       )
@@ -735,5 +860,14 @@ class MainActivity : Activity() {
       60 -> "1 min"
       else -> "${seconds / 60} min"
     }
+
+    val DAILY_LIMIT_OPTIONS = listOf(15, 30, 60, 120)
+    val HOURLY_LIMIT_OPTIONS = listOf(5, 10, 15, 30)
+
+    /** Segment labels: "10 min", "1 hour", "2 hours". */
+    fun shortMinutes(minutes: Int): String = if (minutes >= 60 && minutes % 60 == 0) QuotaLimits.label(minutes) else "$minutes min"
+
+    /** Time left, rounded up so the last seconds still read "1 min". */
+    fun minutesLeft(ms: Long): String = "${ceil(ms.coerceAtLeast(0) / 60_000.0).toInt()} min"
   }
 }
