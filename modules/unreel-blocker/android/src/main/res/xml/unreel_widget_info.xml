@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Home-screen widget definition. Opens at 4×2 cells on Android 12+ (targetCell*), resizes down to
+  one row and up as far as the launcher allows. updatePeriodMillis is the system's floor of 30
+  minutes; Unreel also redraws it itself (see ScreenTimeWidget.kt), so this is only a backstop.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+  android:description="@string/unreel_widget_description"
+  android:initialLayout="@layout/unreel_widget"
+  android:minHeight="110dp"
+  android:minResizeHeight="40dp"
+  android:minResizeWidth="110dp"
+  android:minWidth="250dp"
+  android:previewLayout="@layout/unreel_widget_preview"
+  android:resizeMode="horizontal|vertical"
+  android:targetCellHeight="2"
+  android:targetCellWidth="4"
+  android:updatePeriodMillis="1800000"
+  android:widgetCategory="home_screen" />

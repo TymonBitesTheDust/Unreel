@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Home-screen widget (widget/ScreenTimeWidget.kt). Widgets may use only framework layouts,
+  TextView and ImageView, so the bars arrive as bitmaps. One layout for every size: the code
+  shows the compact row or the full block, and hides the legend lines when they don't fit.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@android:id/background"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/unreel_widget_bg"
+  android:gravity="center_vertical"
+  android:orientation="vertical"
+  android:padding="14dp">
+
+  <TextView
+    android:id="@+id/unreel_widget_setup"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/unreel_widget_setup"
+    android:textColor="@color/unreel_widget_ink"
+    android:textSize="14sp"
+    android:visibility="gone" />
+
+  <LinearLayout
+    android:id="@+id/unreel_widget_compact"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:visibility="gone">
+
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:orientation="vertical">
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/unreel_widget_youtube"
+        android:textColor="@color/unreel_widget_muted"
+        android:textSize="12sp" />
+
+      <TextView
+        android:id="@+id/unreel_widget_youtube_total_compact"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:maxLines="1"
+        android:text="@string/unreel_widget_empty"
+        android:textColor="@color/unreel_widget_ink"
+        android:textSize="16sp" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:orientation="vertical">
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/unreel_widget_instagram"
+        android:textColor="@color/unreel_widget_muted"
+        android:textSize="12sp" />
+
+      <TextView
+        android:id="@+id/unreel_widget_instagram_total_compact"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:maxLines="1"
+        android:text="@string/unreel_widget_empty"
+        android:textColor="@color/unreel_widget_ink"
+        android:textSize="16sp" />
+    </LinearLayout>
+  </LinearLayout>
+
+  <LinearLayout
+    android:id="@+id/unreel_widget_full"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center_vertical"
+      android:orientation="horizontal">
+
+      <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:fontFamily="sans-serif-medium"
+        android:maxLines="1"
+        android:text="@string/unreel_widget_title"
+        android:textColor="@color/unreel_widget_ink"
+        android:textSize="14sp" />
+
+      <TextView
+        android:id="@+id/unreel_widget_stopped"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:textColor="@color/unreel_widget_muted"
+        android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="10dp"
+      android:orientation="horizontal">
+
+      <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/unreel_widget_youtube"
+        android:textColor="@color/unreel_widget_ink"
+        android:textSize="14sp" />
+
+      <TextView
+        android:id="@+id/unreel_widget_youtube_total"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/unreel_widget_empty"
+        android:textColor="@color/unreel_widget_ink"
+        android:textSize="14sp" />
+    </LinearLayout>
+
+    <ImageView
+      android:id="@+id/unreel_widget_youtube_bar"
+      android:layout_width="match_parent"
+      android:layout_height="8dp"
+      android:layout_marginTop="6dp"
+      android:importantForAccessibility="no"
+      android:scaleType="fitXY" />
+
+    <TextView
+      android:id="@+id/unreel_widget_youtube_legend"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="4dp"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:textColor="@color/unreel_widget_muted"
+      android:textSize="12sp" />
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="10dp"
+      android:orientation="horizontal">
+
+      <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/unreel_widget_instagram"
+        android:textColor="@color/unreel_widget_ink"
+        android:textSize="14sp" />
+
+      <TextView
+        android:id="@+id/unreel_widget_instagram_total"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/unreel_widget_empty"
+        android:textColor="@color/unreel_widget_ink"
+        android:textSize="14sp" />
+    </LinearLayout>
+
+    <ImageView
+      android:id="@+id/unreel_widget_instagram_bar"
+      android:layout_width="match_parent"
+      android:layout_height="8dp"
+      android:layout_marginTop="6dp"
+      android:importantForAccessibility="no"
+      android:scaleType="fitXY" />
+
+    <TextView
+      android:id="@+id/unreel_widget_instagram_legend"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="4dp"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:textColor="@color/unreel_widget_muted"
+      android:textSize="12sp" />
+  </LinearLayout>
+</LinearLayout>

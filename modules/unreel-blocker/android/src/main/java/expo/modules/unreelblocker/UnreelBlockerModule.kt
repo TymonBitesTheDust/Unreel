@@ -17,6 +17,7 @@ import expo.modules.unreelblocker.data.StatsStore
 import expo.modules.unreelblocker.detection.RulesRepository
 import expo.modules.unreelblocker.service.ServiceStatus
 import expo.modules.unreelblocker.service.ShortFormBlockerService
+import expo.modules.unreelblocker.widget.ScreenTimeWidget
 
 /** Partial update from JS. Absent fields keep their current value. */
 class ConfigPatch : Record {
@@ -134,6 +135,7 @@ class UnreelBlockerModule : Module() {
     Function("resetStats") {
       stats.reset()
       screenTime.reset()
+      ScreenTimeWidget.updateAll(context)
     }
 
     /** Time in each part of YouTube and Instagram over the last [days] days, oldest first. */

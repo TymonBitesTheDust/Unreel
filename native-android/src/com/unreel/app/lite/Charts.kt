@@ -8,6 +8,7 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.view.View
 import expo.modules.unreelblocker.data.StatsStore
+import expo.modules.unreelblocker.widget.BarPainter
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.ceil
@@ -181,7 +182,6 @@ class SegmentedBarView(context: Context, private val p: Palette) : View(context)
 
   private val density = resources.displayMetrics.density
   private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-  private val clip = Path()
 
   init {
     importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
@@ -191,30 +191,7 @@ class SegmentedBarView(context: Context, private val p: Palette) : View(context)
     setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), (8 * density).toInt())
   }
 
-  override fun onDraw(canvas: Canvas) {
-    val w = width.toFloat()
-    val h = height.toFloat()
-    val shown = parts.filter { it.first > 0 }
-    val total = shown.sumOf { it.first }
-    if (total <= 0L) {
-      paint.color = p.line
-      canvas.drawRoundRect(RectF(0f, 0f, w, h), h / 2, h / 2, paint)
-      return
-    }
-    val gap = 2 * density
-    val usable = w - gap * (shown.size - 1)
-    clip.reset()
-    clip.addRoundRect(RectF(0f, 0f, w, h), h / 2, h / 2, Path.Direction.CW)
-    canvas.save()
-    canvas.clipPath(clip)
-    var x = 0f
-    shown.forEachIndexed { i, (value, color) ->
-      // Even a sliver stays visible; the clip trims any overshoot at the far end.
-      val segment = max(2 * density, usable * value / total)
-      paint.color = color
-      canvas.drawRect(x, 0f, if (i == shown.lastIndex) w else x + segment, h, paint)
-      x += segment + gap
-    }
-    canvas.restore()
-  }
+  // The same drawing as the home-screen widget's bars.
+  override fun onDraw(canvas: Canvas) =
+    BarPainter.draw(canvas, parts, width.toFloat(), height.toFloat(), 2 * density, 2 * density, p.line, paint)
 }

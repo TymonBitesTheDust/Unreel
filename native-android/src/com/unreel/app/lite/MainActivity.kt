@@ -36,6 +36,8 @@ import expo.modules.unreelblocker.data.StatsStore
 import expo.modules.unreelblocker.detection.RulesRepository
 import expo.modules.unreelblocker.service.ServiceStatus
 import expo.modules.unreelblocker.service.ShortFormBlockerService
+import expo.modules.unreelblocker.widget.ScreenTimeFormat
+import expo.modules.unreelblocker.widget.ScreenTimeWidget
 import java.text.DateFormat
 import java.util.Calendar
 import java.util.Date
@@ -124,6 +126,7 @@ class MainActivity : Activity() {
 
   override fun onPause() {
     handler.removeCallbacks(ticker)
+    ScreenTimeWidget.updateAll(this) // Settings or numbers may have changed; the home screen is next.
     super.onPause()
   }
 
@@ -275,6 +278,7 @@ class MainActivity : Activity() {
           .setPositiveButton("Reset") { _, _ ->
             stats.reset()
             screenTime.reset()
+            ScreenTimeWidget.updateAll(this)
             render()
           }
           .setNegativeButton("Cancel", null)
@@ -949,19 +953,8 @@ class MainActivity : Activity() {
       else -> "Other"
     }
 
-    /** "0 min", "under 1 min", "45 min", "2 h", "1 h 12 min". */
-    fun duration(ms: Long): String {
-      if (ms <= 0L) return "0 min"
-      val minutes = ms / 60_000L
-      if (minutes == 0L) return "under 1 min"
-      val h = minutes / 60
-      val m = minutes % 60
-      return when {
-        h == 0L -> "$m min"
-        m == 0L -> "$h h"
-        else -> "$h h $m min"
-      }
-    }
+    /** "0 min", "under 1 min", "45 min", "2 h", "1 h 12 min": shared with the widget. */
+    fun duration(ms: Long): String = ScreenTimeFormat.duration(ms)
 
     val DAILY_LIMIT_OPTIONS = listOf(15, 30, 60, 120)
     val HOURLY_LIMIT_OPTIONS = listOf(5, 10, 15, 30)

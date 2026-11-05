@@ -20,4 +20,17 @@
   <string name="unreel_quota_toast_day">Time’s up for today. More tomorrow.</string>
   <string name="unreel_quota_warn_hour">About a minute of Shorts and Reels left this hour</string>
   <string name="unreel_quota_warn_day">About a minute of Shorts and Reels left today</string>
+
+  <!-- Home-screen widget. -->
+  <string name="unreel_widget_label">Screen time</string>
+  <string name="unreel_widget_description">Today\'s time in YouTube and Instagram, split into parts, and what Unreel stopped.</string>
+  <string name="unreel_widget_title">Screen time today</string>
+  <string name="unreel_widget_stopped">%1$d stopped</string>
+  <string name="unreel_widget_setup">Set up Unreel to count your screen time. Tap to open it.</string>
+  <string name="unreel_widget_youtube">YouTube</string>
+  <string name="unreel_widget_instagram">Instagram</string>
+  <string name="unreel_widget_empty">–</string>
+  <string name="unreel_widget_preview_stopped">12 stopped</string>
+  <string name="unreel_widget_preview_youtube_legend"><font color="#D95926">●</font> Shorts 1m   <font color="#3987E5">●</font> Videos 52m   <font color="#8A90A6">●</font> Not watching 17m</string>
+  <string name="unreel_widget_preview_instagram_legend"><font color="#D95926">●</font> Scrolling 0m   <font color="#3987E5">●</font> Posts &amp; Stories 21m   <font color="#199E70">●</font> Chat 14m   <font color="#8A90A6">●</font> Other 6m</string>
 </resources>

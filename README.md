@@ -59,6 +59,9 @@ What the Android app does:
 - **Or allows a little each day,** if quitting all at once is too hard. Turn on **Time limits** and Shorts and Reels play for up to 1 hour a day and 10 minutes in each hour (you choose the amounts; YouTube and Instagram share them). When the time is up, they're blocked until the next hour, or until tomorrow. Lowering a limit works straight away; raising one waits like any other loosening.
 - **Makes giving in harder:** turning blocking off or loosening a setting waits behind an optional PIN and a 5-minute delay. Pauses end by themselves.
 - **Shows your screen time,** today or over the last 7 days, split into parts. YouTube: **Shorts**, **Videos** and **Not watching** (browsing, searching). Instagram: **Scrolling Reels**, **Posts & Stories** (including one Reel opened from a post or chat), **Chat** and **Other**. It's counted whether or not blocking is on.
+- **Puts it on your Home screen** with a widget: today's YouTube and Instagram time, split into the same parts, and how many Shorts and Reels were stopped. Tap it to open Unreel.
+
+**Add the widget** (Samsung and other Android phones): touch and hold an empty spot on the Home screen, tap **Widgets**, find **Unreel**, choose **Screen time** and tap **Add**. It opens at 4×2; touch and hold it, then drag the edges to resize. Smaller, it shows each app's total; taller, it adds the bars and the parts.
 
 <p align="center">
   <img src="docs/images/how-it-works.png" alt="How it works: you open the Shorts tab, Unreel shows a pause screen, you're back on Home" width="880">
