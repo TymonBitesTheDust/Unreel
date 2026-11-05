@@ -5,8 +5,9 @@ import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 
 /**
- * Debug builds only: when a watched app shows a screen nothing matched, log the distinct view IDs
- * on it so a broken rule can be fixed from `adb logcat -s UnreelDiag`.
+ * Debug builds only: when a watched app shows a screen nothing matched (or that screen time can
+ * only count as "other"), log the distinct view IDs on it so a broken rule can be fixed from
+ * `adb logcat -s UnreelDiag`.
  *
  * Why not `uiautomator dump`? It waits for the window to go idle, and a playing reel never idles,
  * so it hangs on exactly the screens you need. The service already has the tree.
@@ -18,7 +19,7 @@ internal class ViewIdDiagnostics {
   private val seenSignatures = HashSet<String>()
   private var lastWalkAt = 0L
 
-  fun maybeLog(pkg: String, root: AccessibilityNodeInfo) {
+  fun maybeLog(pkg: String, root: AccessibilityNodeInfo, reason: String) {
     val now = SystemClock.elapsedRealtime()
     if (now - lastWalkAt < THROTTLE_MS) return
     lastWalkAt = now
@@ -35,7 +36,7 @@ internal class ViewIdDiagnostics {
     }
     val signature = ids.joinToString(",")
     if (seenSignatures.size > MAX_SIGNATURES || !seenSignatures.add(signature)) return
-    Log.d(TAG, "unmatched $pkg (${visited} nodes): $signature")
+    Log.d(TAG, "$reason $pkg (${visited} nodes): $signature")
   }
 
   private companion object {

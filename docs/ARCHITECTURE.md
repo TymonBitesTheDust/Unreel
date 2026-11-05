@@ -95,6 +95,15 @@ For people who can't quit all at once: with `quotaEnabled`, the feed plays while
 - **Clock.** Hours are local clock hours (14:00–15:00) and days local calendar days. A session across 14:59–15:01 is split between both hours. Hour starts are computed from the UTC offset at that instant, so the repeated hour when clocks go back counts as a separate hour.
 - **Storage.** `QuotaLedger` keeps only the current day and hour. It always moves to the newest segment's day, even backwards, so setting the phone's clock back yields one fresh allowance rather than uncounted watching. "Reset numbers" doesn't touch it.
 
+**Screen time** (`detection/ScreenClassifier.kt`, `data/UsageMeter.kt`, `data/ScreenTimeStore.kt`)
+
+Time in each app, split into parts: YouTube `shorts` / `video` / `other` ("Not watching"), Instagram `scrolling` / `normal` (posts, Stories, one Reel opened from a post or chat) / `chat` / `other`. Recorded whether or not blocking is on, so the service no longer drops events while blocking is off or paused.
+
+- **Sorting.** The `screenTime` section of the rules lists each app's categories in order; the first match wins and anything else is `other`. A category matches a short-form target (entry `any`, `feed` = the feed tab or a player the user has swiped in, `single` = a player not swiped), any visible view ID, or a selected tab. A swipe only counts once the player has been seen, so the pager settling as it opens doesn't turn one Reel into scrolling. Rules may use only the category ids the dashboards know (`SCREEN_CATEGORIES`); others are rejected.
+- **Timing.** Every scan sorts the screen, at most once a second unless a new window opened or the other app took over. `UsageMeter` gives the time between two observations to the earlier one's part. A re-check every 5 s (window list plus `isInteractive`) notices the app leaving the screen; the time since the last observation then isn't counted. Gaps over 10 s are capped. Slices are split at midnight and written every 10 s and on each change of part.
+- **Storage.** `d:<day>:<app>:<category>` → ms in `unreel_screentime`, 60 days, cleared by "Reset numbers".
+- **Accuracy.** Expect it to differ from Android's Digital Wellbeing by a little: Unreel counts only while the app's window is on screen, rounds each visit down to the last check, and sorts by view IDs. The `video`, `chat` and post IDs are best-known names not yet confirmed on a device; debug builds log every screen counted as `other` (`adb logcat -s UnreelDiag`), which is how to find the right ones.
+
 ### 1.2 iOS
 
 **The hard limit:** iOS apps can't read or control another app's UI. There's no accessibility-service equivalent for third parties, no way to inspect Instagram's view hierarchy, and no way to inject into it. **In-app, Reels-only blocking is not possible on iOS.** Anything claiming otherwise is either locking the whole app or working on the website.
@@ -188,7 +197,7 @@ unreel/
 │   │   │   ├── service/ViewIdDiagnostics.kt      Debug-only view-ID logging
 │   │   │   ├── detection/                        Rules model, parser, repository, detector, tree adapter
 │   │   │   ├── intervention/                     Navigator (Home/Back/escalation), overlay card
-│   │   │   └── data/                             Config prefs, daily stats, time limits, in-process event bus
+│   │   │   └── data/                             Config prefs, daily stats, time limits, screen time, in-process event bus
 │   │   └── src/test/.../ShortFormDetectorTest.kt JVM tests with fake trees
 │   └── ios/
 │       ├── UnreelBlockerModule.swift             JS bridge: auth, picker, config, stats
@@ -265,6 +274,8 @@ Tightening changes apply immediately. The pending request is persisted, so killi
 | Time limits: user leaves the app or turns the screen off mid-feed | No event arrives, so the count would run on | 5-second re-check of the window list and `isInteractive` stops the count |
 | Time limits: phone clock changed | Fresh allowance | At most one fresh allowance per change (ledger follows the newest day/hour, unit-tested). Like revoking Accessibility, a deliberate act a normal app can't prevent |
 | Time limits: service killed mid-feed | Unsaved time lost | Written every 10 s, so at most 10 s goes uncounted |
+| Screen time: an app update renames a screen's view IDs | That part's time lands in "Other" (or "Not watching") | Same loop as detection: the IDs are in the rules JSON; debug builds log every `other` screen's IDs |
+| Screen time: YouTube in picture-in-picture or split screen | The app is still on screen | Counted, by what its window shows |
 | User disables the service or uninstalls | Blocking ends | Can't be prevented by a normal app. Options for a "strict mode": Device Admin to slow uninstall, or watching the Settings app's Unreel pages — both add Play-policy and support burden; left out deliberately |
 | **iOS: Family Controls entitlement** | TestFlight builds fail to sign | Request distribution approval early; all extensions need it |
 | iOS: missing App Group | Extensions can't read config | Derived from bundle ID (`group.<bundle id>`), mirrored into targets by apple-targets; status reports `appGroupReachable` |
@@ -299,6 +310,7 @@ npm run test:android       # after `npm run prebuild`: JVM tests for detection
 
 - Android: Shorts tab → lands on Home; Short from the home shelf (allowance on/off); Short from a shared link then swipe; Reels tab; reel from a DM then swipe; Stories untouched; feed inline video untouched; comments sheet open over a reel; split screen; dark mode; a second locale.
 - Android: toggle the service off in Settings and check the dashboard; force-stop and relaunch; reinstall.
+- Android screen time: watch a long video, a Short, browse YouTube's home; on Instagram scroll the Reels tab, open one Reel from a chat (Posts & Stories) and swipe on (Scrolling Reels), read Stories, chat, open Explore (Other); check each lands in its part. Lock the screen and press Home mid-video and check the time stops.
 - Android time limits: set 15 min a day / 5 min an hour; scroll Reels until the one-minute toast, then the "Time's up for this hour" card; leave and come back after the hour; press Home mid-feed and check the meter stops; lock the screen mid-feed; reel from a DM after the time is up (one plays, swiping blocks).
 - iOS: authorize, pick both apps, open each; allowance mode with a 1-minute budget; pause 15 minutes and wait it out with the app closed; midnight rollover; revoke access in Settings.
 - Safari: `youtube.com/shorts/<id>` opens `/watch`; in-site navigation to Shorts bounces; Instagram `/reels/` bounces to home, `/reel/<id>` opens as a post.

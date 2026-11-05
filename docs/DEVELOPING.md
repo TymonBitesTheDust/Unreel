@@ -48,7 +48,7 @@ The iPhone version of the Expo app (Screen Time lock plus a Safari extension) ne
 ## When detection breaks after an app update
 
 1. Run a debug build and open the screen that isn't caught.
-2. Run `adb logcat -s UnreelDiag`. It prints the view IDs on screens that nothing matched.
+2. Run `adb logcat -s UnreelDiag`. It prints the view IDs on screens that nothing matched, and on every screen that Screen time can only count as "other".
 3. Add the new ID to `unreel_rules.json` and raise `version`.
 
 ## The Safari script and iPhone pages

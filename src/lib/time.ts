@@ -35,6 +35,17 @@ export function shortMinutes(minutes: number): string {
   return minutes >= 60 && minutes % 60 === 0 ? minutesLabel(minutes) : `${minutes} min`;
 }
 
+/** "0 min", "under 1 min", "45 min", "2 h", "1 h 12 min". Same as the native dashboard. */
+export function durationText(ms: number): string {
+  if (ms <= 0) return '0 min';
+  const minutes = Math.floor(ms / MINUTE);
+  if (minutes === 0) return 'under 1 min';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} min`;
+  return m === 0 ? `${h} h` : `${h} h ${m} min`;
+}
+
 /** Time left, rounded up so the last seconds still read "1 min". */
 export function minutesLeft(ms: number): string {
   return `${Math.ceil(Math.max(0, ms) / MINUTE)} min`;

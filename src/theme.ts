@@ -27,6 +27,14 @@ const light = {
   warn: '#A66300',
   warnSurface: '#FFF1D6',
   danger: '#C23A22',
+  // Screen time categories (chart marks only, never text): the dataviz reference palette's first
+  // three categorical slots, checked against these surfaces. Mirrors native-android Palette.kt.
+  /** Watching / normal use. */
+  vizBlue: '#2A78D6',
+  /** The short-form feeds: Shorts, scrolling Reels. */
+  vizOrange: '#EB6834',
+  /** Chat. */
+  vizAqua: '#1BAF7A',
 };
 
 const dark: typeof light = {
@@ -44,6 +52,9 @@ const dark: typeof light = {
   warn: '#F2B24C',
   warnSurface: '#33270F',
   danger: '#FF7A61',
+  vizBlue: '#3987E5',
+  vizOrange: '#D95926',
+  vizAqua: '#199E70',
 };
 
 export type Palette = typeof light;

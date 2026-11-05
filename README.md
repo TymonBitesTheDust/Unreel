@@ -56,6 +56,7 @@ What the Android app does:
 - **Gives you a moment to think** with a short pause card, and **counts** what it stopped today and this week.
 - **Or allows a little each day,** if quitting all at once is too hard. Turn on **Time limits** and Shorts and Reels play for up to 1 hour a day and 10 minutes in each hour (you choose the amounts; YouTube and Instagram share them). When the time is up, they're blocked until the next hour, or until tomorrow. Lowering a limit works straight away; raising one waits like any other loosening.
 - **Makes giving in harder:** turning blocking off or loosening a setting waits behind an optional PIN and a 5-minute delay. Pauses end by themselves.
+- **Shows your screen time,** today or over the last 7 days, split into parts. YouTube: **Shorts**, **Videos** and **Not watching** (browsing, searching). Instagram: **Scrolling Reels**, **Posts & Stories** (including one Reel opened from a post or chat), **Chat** and **Other**. It's counted whether or not blocking is on.
 
 <p align="center">
   <img src="docs/images/how-it-works.png" alt="How it works: you open the Shorts tab, Unreel shows a pause screen, you're back on Home" width="880">
@@ -69,7 +70,7 @@ What the Android app does:
 ## Privacy
 
 - **iPhone and computers:** the script runs only on youtube.com and instagram.com, inside your browser, and sends nothing anywhere.
-- **Android:** Accessibility access is the only special permission. Android sends Unreel events only from YouTube and Instagram; it reads the names of on-screen layout elements (such as whether the Reels tab is selected), not your messages or typing. With time limits on, it also times how long Shorts and Reels stay open, and keeps that count on the phone. The app has no internet permission, so nothing can leave your phone.
+- **Android:** Accessibility access is the only special permission. Android sends Unreel events only from YouTube and Instagram; it reads the names of on-screen layout elements (such as whether the Reels tab is selected), not your messages or typing. It also times how long you spend in each part of YouTube and Instagram, for Screen time and time limits, and keeps those times on the phone. The app has no internet permission, so nothing can leave your phone.
 - No accounts, ads or analytics anywhere.
 
 ## Something not working?

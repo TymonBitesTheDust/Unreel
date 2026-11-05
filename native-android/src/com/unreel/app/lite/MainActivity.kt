@@ -30,6 +30,8 @@ import expo.modules.unreelblocker.data.QuotaExhausted
 import expo.modules.unreelblocker.data.QuotaLimits
 import expo.modules.unreelblocker.data.QuotaStatus
 import expo.modules.unreelblocker.data.QuotaStore
+import expo.modules.unreelblocker.data.SCREEN_CATEGORIES
+import expo.modules.unreelblocker.data.ScreenTimeStore
 import expo.modules.unreelblocker.data.StatsStore
 import expo.modules.unreelblocker.detection.RulesRepository
 import expo.modules.unreelblocker.service.ServiceStatus
@@ -41,8 +43,8 @@ import kotlin.math.ceil
 
 /**
  * Native dashboard for the standalone Android build. Same behaviour as the Expo app's
- * src/app/index.tsx + settings.tsx: status and master switch, today's blocks, the week, what to
- * block, time limits, and the friction gate (PIN → unlock delay → confirm) in front of anything
+ * src/app/index.tsx + settings.tsx: status and master switch, today's blocks, the week, screen
+ * time, what to block, time limits, and the friction gate (PIN → unlock delay → confirm) in front of anything
  * that loosens blocking.
  *
  * Framework widgets only (no AndroidX), so it builds with nothing but aapt2, kotlinc and dx.
@@ -53,6 +55,7 @@ class MainActivity : Activity() {
   private lateinit var prefs: BlockerPrefs
   private lateinit var stats: StatsStore
   private lateinit var quota: QuotaStore
+  private lateinit var screenTime: ScreenTimeStore
   private lateinit var friction: FrictionStore
   private lateinit var scroll: ScrollView
   private lateinit var content: LinearLayout
@@ -70,6 +73,8 @@ class MainActivity : Activity() {
   private var pausedUntilShown = 0L
   /** Next clock hour while time limits are on: the hourly allowance refills then. */
   private var quotaRefreshAt = 0L
+  /** Screen time shows the last 7 days instead of today. */
+  private var screenTimeWeek = false
 
   private val ticker = object : Runnable {
     override fun run() {
@@ -86,6 +91,7 @@ class MainActivity : Activity() {
     prefs = BlockerPrefs(this)
     stats = StatsStore(this)
     quota = QuotaStore(this)
+    screenTime = ScreenTimeStore(this)
     friction = FrictionStore(this)
     displayFace = font("fonts/BarlowCondensed_600SemiBold.ttf")
     displayBoldFace = font("fonts/BarlowCondensed_700Bold.ttf")
@@ -192,6 +198,8 @@ class MainActivity : Activity() {
     section("This week")
     group(WeekChartView(this, p).apply { this.days = days; setPadding(dp(16), 0, dp(16), 0) })
 
+    screenTimeSection()
+
     section("What to block")
     group(
       switchRow(
@@ -263,16 +271,17 @@ class MainActivity : Activity() {
       row("Reset numbers", null) {
         AlertDialog.Builder(this)
           .setTitle("Reset your numbers?")
-          .setMessage("This clears every count. Blocking keeps working.")
+          .setMessage("This clears every count and your screen time. Blocking keeps working.")
           .setPositiveButton("Reset") { _, _ ->
             stats.reset()
+            screenTime.reset()
             render()
           }
           .setNegativeButton("Cancel", null)
           .show()
       },
     )
-    footer("Unreel has no account and no analytics, and doesn’t use the internet. Block counts and settings never leave this phone.")
+    footer("Unreel has no account and no analytics, and doesn’t use the internet. Block counts, screen time and settings never leave this phone.")
 
     scroll.post { scroll.scrollTo(0, scrollY) }
     tick()
@@ -641,6 +650,12 @@ class MainActivity : Activity() {
     }
     box.addView(text(title, 16f, p.ink))
     subtitle?.let { box.addView(text(it, 14f, p.muted), margins(top = 2)) }
+    box.addView(segmented(title, options, current, label, onPick), margins(top = 12))
+    return box
+  }
+
+  /** Equal-width options in a pill; [title] prefixes each option's spoken description. */
+  private fun segmented(title: String, options: List<Int>, current: Int, label: (Int) -> String, onPick: (Int) -> Unit): View {
     val segmented = horizontal().apply {
       background = rounded(p.background, 12, stroke = p.line, strokeDp = 1f)
       setPadding(dp(3), dp(3), dp(3), dp(3))
@@ -657,8 +672,69 @@ class MainActivity : Activity() {
       }
       segmented.addView(option, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
     }
-    box.addView(segmented, margins(top = 12))
+    return segmented
+  }
+
+  // ---- Screen time ---------------------------------------------------------------------------
+
+  /** Time in each part of YouTube and Instagram, today or over the last 7 days. */
+  private fun screenTimeSection() {
+    section("Screen time")
+    val days = screenTime.lastDays(if (screenTimeWeek) 7 else 1)
+    val period = vertical().apply {
+      setPadding(dp(16), dp(12), dp(16), dp(12))
+      addView(segmented("Screen time for", listOf(0, 1), if (screenTimeWeek) 1 else 0, { if (it == 0) "Today" else "Last 7 days" }) {
+        screenTimeWeek = it == 1
+        render()
+      })
+    }
+    val apps = SCREEN_CATEGORIES.map { (app, categories) ->
+      appUsage(app, categories.map { category -> category to days.sumOf { it.of(app, category) } }, days.size)
+    }
+    group(period, *apps.toTypedArray())
+    footer("Counted while YouTube or Instagram is on screen, whether or not blocking is on. It stays on this phone, and Reset numbers clears it.")
+  }
+
+  /** One app: its total, a bar split into parts, and a row per part with a matching swatch. */
+  private fun appUsage(app: String, parts: List<Pair<String, Long>>, days: Int): View {
+    val box = vertical().apply {
+      setPadding(dp(16), dp(14), dp(16), dp(16))
+      background = topDivider()
+    }
+    val total = parts.sumOf { it.second }
+    val top = horizontal().apply { gravity = Gravity.CENTER_VERTICAL }
+    top.addView(text(APP_NAMES[app] ?: app, 16f, p.ink, Typeface.DEFAULT_BOLD), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+    top.addView(text(duration(total), 16f, p.ink, Typeface.DEFAULT_BOLD))
+    box.addView(top)
+    if (days > 1 && total > 0) box.addView(text("About ${duration(total / days)} a day", 14f, p.muted), margins(top = 2))
+    box.addView(SegmentedBarView(this, p).apply { this.parts = parts.map { (category, ms) -> ms to categoryColor(category) } }, margins(top = 12))
+    for ((category, ms) in parts) {
+      val row = horizontal().apply {
+        gravity = Gravity.CENTER_VERTICAL
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        contentDescription = "${categoryLabel(app, category)}: ${duration(ms)}"
+      }
+      val swatch = View(this).apply {
+        background = GradientDrawable().apply {
+          shape = GradientDrawable.OVAL
+          setColor(categoryColor(category))
+        }
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+      }
+      row.addView(swatch, LinearLayout.LayoutParams(dp(10), dp(10)).apply { marginEnd = dp(10) })
+      row.addView(text(categoryLabel(app, category), 14f, p.ink).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+      row.addView(text(duration(ms), 14f, p.muted).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO })
+      box.addView(row, margins(top = 10))
+    }
     return box
+  }
+
+  /** The same colour for the same kind of part in both apps; "other" stays neutral. */
+  private fun categoryColor(category: String): Int = when (category) {
+    "shorts", "scrolling" -> p.vizOrange
+    "video", "normal" -> p.vizBlue
+    "chat" -> p.vizAqua
+    else -> p.muted
   }
 
   /**
@@ -673,7 +749,7 @@ class MainActivity : Activity() {
           "• It watches only YouTube and Instagram.\n" +
           "• It reads the names of on-screen layout elements, like whether the Reels tab is selected. Not your messages, captions or typing.\n" +
           "• It presses Back or taps Home for you, only when the Shorts or Reels feed is on screen.\n" +
-          "• If you set a time limit, it also times how long Shorts and Reels stay on screen.\n" +
+          "• It times how long you spend in each part of YouTube and Instagram, for Screen time and time limits.\n" +
           "• Everything stays on this phone.\n\n" +
           "In Settings, choose Unreel and switch it on. If the switch is greyed out, open App info, tap ⋮, then Allow restricted settings.",
       )
@@ -859,6 +935,32 @@ class MainActivity : Activity() {
       0 -> "None"
       60 -> "1 min"
       else -> "${seconds / 60} min"
+    }
+
+    val APP_NAMES = mapOf("youtube" to "YouTube", "instagram" to "Instagram")
+
+    fun categoryLabel(app: String, category: String): String = when ("$app.$category") {
+      "youtube.shorts" -> "Shorts"
+      "youtube.video" -> "Videos"
+      "youtube.other" -> "Not watching"
+      "instagram.scrolling" -> "Scrolling Reels"
+      "instagram.normal" -> "Posts & Stories"
+      "instagram.chat" -> "Chat"
+      else -> "Other"
+    }
+
+    /** "0 min", "under 1 min", "45 min", "2 h", "1 h 12 min". */
+    fun duration(ms: Long): String {
+      if (ms <= 0L) return "0 min"
+      val minutes = ms / 60_000L
+      if (minutes == 0L) return "under 1 min"
+      val h = minutes / 60
+      val m = minutes % 60
+      return when {
+        h == 0L -> "$m min"
+        m == 0L -> "$h h"
+        else -> "$h h $m min"
+      }
     }
 
     val DAILY_LIMIT_OPTIONS = listOf(15, 30, 60, 120)

@@ -12,6 +12,7 @@ import expo.modules.unreelblocker.data.BlockEventBus
 import expo.modules.unreelblocker.data.BlockerConfig
 import expo.modules.unreelblocker.data.BlockerPrefs
 import expo.modules.unreelblocker.data.QuotaStore
+import expo.modules.unreelblocker.data.ScreenTimeStore
 import expo.modules.unreelblocker.data.StatsStore
 import expo.modules.unreelblocker.detection.RulesRepository
 import expo.modules.unreelblocker.service.ServiceStatus
@@ -46,6 +47,7 @@ class UnreelBlockerModule : Module() {
   private val prefs by lazy { BlockerPrefs(context) }
   private val stats by lazy { StatsStore(context) }
   private val quota by lazy { QuotaStore(context) }
+  private val screenTime by lazy { ScreenTimeStore(context) }
   private val rules by lazy { RulesRepository(context) }
 
   private var stopBlocked: (() -> Unit)? = null
@@ -129,7 +131,16 @@ class UnreelBlockerModule : Module() {
       )
     }
 
-    Function("resetStats") { stats.reset() }
+    Function("resetStats") {
+      stats.reset()
+      screenTime.reset()
+    }
+
+    /** Time in each part of YouTube and Instagram over the last [days] days, oldest first. */
+    Function("getScreenTime") { days: Int ->
+      val window = screenTime.lastDays(days.coerceIn(1, StatsStore.RETENTION_DAYS))
+      mapOf("days" to window.map { it.toMap() }, "today" to window.last().toMap())
+    }
 
     /** Today's and this hour's use of the time limits. Time is only counted while they're on. */
     Function("getQuota") { quota.status(prefs.read().quotaLimits).toMap() }
