@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Widget surface and text, light (values-night has the dark ones). Mirrors src/theme.ts. -->
+  <color name="unreel_widget_surface">#FFFFFF</color>
+  <color name="unreel_widget_ink">#10162F</color>
+  <color name="unreel_widget_muted">#5A6075</color>
+  <!-- Part colours: one set for both themes (the widget bakes them into bitmaps), all >= 3:1 on
+       both surfaces. Same values as ScreenTimeWidget.kt. -->
+  <color name="unreel_widget_orange">#D95926</color>
+  <color name="unreel_widget_blue">#3987E5</color>
+  <color name="unreel_widget_aqua">#199E70</color>
+  <color name="unreel_widget_gray">#8A90A6</color>
+</resources>

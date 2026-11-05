@@ -37,6 +37,7 @@ import expo.modules.unreelblocker.detection.ShortFormDetector
 import expo.modules.unreelblocker.detection.UiTree
 import expo.modules.unreelblocker.intervention.BlockOverlay
 import expo.modules.unreelblocker.intervention.FeedExitNavigator
+import expo.modules.unreelblocker.widget.ScreenTimeWidget
 import java.util.Date
 
 /**
@@ -335,9 +336,12 @@ class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnShar
 
   private fun stopUsage() {
     worker.removeCallbacks(usageTick)
+    val hadApp = usageMeter.pkg != null
     saveUsage(usageMeter.stop(SystemClock.elapsedRealtime(), System.currentTimeMillis()))
     playerOpen = false
     swipedInPlayer = false
+    // The app just left the screen, which is when the home-screen widget comes back into view.
+    if (hadApp) ScreenTimeWidget.updateAll(this)
   }
 
   private fun saveUsage(slices: List<UsageMeter.Slice>) {

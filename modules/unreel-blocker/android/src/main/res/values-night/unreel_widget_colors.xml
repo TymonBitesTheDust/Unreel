@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="unreel_widget_surface">#171C35</color>
+  <color name="unreel_widget_ink">#EEF0F7</color>
+  <color name="unreel_widget_muted">#9AA1BC</color>
+</resources>

@@ -18,6 +18,19 @@
         android:name="android.accessibilityservice"
         android:resource="@xml/unreel_accessibility_service" />
     </service>
+
+    <!-- Home-screen widget: today's screen time. Only the system and Unreel itself send it broadcasts. -->
+    <receiver
+      android:name="expo.modules.unreelblocker.widget.ScreenTimeWidgetProvider"
+      android:exported="false"
+      android:label="@string/unreel_widget_label">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/unreel_widget_info" />
+    </receiver>
   </application>
 
   <!-- Lets the dashboard check whether YouTube / Instagram are installed (Android 11+ package visibility). -->
