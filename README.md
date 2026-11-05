@@ -29,6 +29,8 @@ iPhone doesn't let apps look inside other apps, so no app can remove just the Sh
 3. **Install the script:** in Safari, open **[unreel.user.js](../../raw/HEAD/iphone/unreel.user.js)**. A page of code appears; that's normal. Tap the **AA** or puzzle-piece button in the address bar, choose **Userscripts**, then **Install**.
 4. **Use the websites:** type **youtube.com** or **instagram.com** into Safari's address bar. The Shorts tab, Shorts shelves and the Reels tab are gone. A Short or Reel a friend sends you still opens, as a normal video or post.
 
+**Screen time:** a small blue badge at the bottom of youtube.com and instagram.com shows how long you've spent there today. Tap it to see the parts, the same as on Android (YouTube: Shorts, Videos, Not watching; Instagram: Scrolling Reels, Posts & Stories, Chat, Other), today or over the last 7 days. It counts only while the site is open and in use, and each site and browser keeps its own count.
+
 ### Keep it working
 
 The YouTube and Instagram **apps** still have their feeds. Pick one:
@@ -67,9 +69,11 @@ What the Android app does:
 - **Safari on a Mac** (macOS 12 or later): install [Userscripts](https://apps.apple.com/app/id1463298887), turn it on in **Safari → Settings → Extensions**, then follow iPhone steps 3 and 4.
 - **Chrome, Edge or Firefox:** install [Violentmonkey](https://violentmonkey.github.io), then open [unreel.user.js](../../raw/HEAD/iphone/unreel.user.js); it offers to install the script.
 
+The screen time badge works the same on a computer. Only the window you're using counts, so two tabs side by side aren't counted twice, and a tab left open while you're away stops counting after 5 minutes unless a video is playing.
+
 ## Privacy
 
-- **iPhone and computers:** the script runs only on youtube.com and instagram.com, inside your browser, and sends nothing anywhere.
+- **iPhone and computers:** the script runs only on youtube.com and instagram.com, inside your browser, and sends nothing anywhere. Screen time is kept in your browser's storage for each site (YouTube's and Instagram's own pages can see that storage, as they can any of their site data).
 - **Android:** Accessibility access is the only special permission. Android sends Unreel events only from YouTube and Instagram; it reads the names of on-screen layout elements (such as whether the Reels tab is selected), not your messages or typing. It also times how long you spend in each part of YouTube and Instagram, for Screen time and time limits, and keeps those times on the phone. The app has no internet permission, so nothing can leave your phone.
 - No accounts, ads or analytics anywhere.
 

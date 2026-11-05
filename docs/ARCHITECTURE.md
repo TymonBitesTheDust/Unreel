@@ -102,6 +102,7 @@ Time in each app, split into parts: YouTube `shorts` / `video` / `other` ("Not w
 - **Sorting.** The `screenTime` section of the rules lists each app's categories in order; the first match wins and anything else is `other`. A category matches a short-form target (entry `any`, `feed` = the feed tab or a player the user has swiped in, `single` = a player not swiped), any visible view ID, or a selected tab. A swipe only counts once the player has been seen, so the pager settling as it opens doesn't turn one Reel into scrolling. Rules may use only the category ids the dashboards know (`SCREEN_CATEGORIES`); others are rejected.
 - **Timing.** Every scan sorts the screen, at most once a second unless a new window opened or the other app took over. `UsageMeter` gives the time between two observations to the earlier one's part. A re-check every 5 s (window list plus `isInteractive`) notices the app leaving the screen; the time since the last observation then isn't counted. Gaps over 10 s are capped. Slices are split at midnight and written every 10 s and on each change of part.
 - **Storage.** `d:<day>:<app>:<category>` → ms in `unreel_screentime`, 60 days, cleared by "Reset numbers".
+- **On the websites** (`targets/safari/assets/screentime.js`, built into the iPhone/computer userscript): the same parts, sorted by address instead of view IDs (`/watch` and `/live/` or a video playing with sound = video, `/direct/` = chat, home, `/p/`, `/reel/`, `/stories/` = normal). Counted once a second while the tab is visible and in use: a video playing with sound, or the page focused (any page on a touch screen) and touched in the last 5 minutes. Kept per site in `localStorage` (`unreel-screen-time`, 60 days), so each site and browser has its own count. A badge in a closed shadow root shows it; the DOM is built with `createElement`/`textContent` only, because YouTube enforces Trusted Types. Tested with `npm run test:userscript`, including that its parts match `SCREEN_CATEGORIES`.
 - **Accuracy.** Expect it to differ from Android's Digital Wellbeing by a little: Unreel counts only while the app's window is on screen, rounds each visit down to the last check, and sorts by view IDs. The `video`, `chat` and post IDs are best-known names not yet confirmed on a device; debug builds log every screen counted as `other` (`adb logcat -s UnreelDiag`), which is how to find the right ones.
 
 ### 1.2 iOS
@@ -209,7 +210,7 @@ unreel/
     ├── activity-monitor/            DeviceActivityMonitor: midnight, pause end, allowance
     ├── shield-config/               Shield appearance + block counter
     ├── shield-action/               Shield button handling
-    └── safari/                      Web extension: rules.json, content.js, content.css
+    └── safari/                      Web extension: rules.json, content.js, content.css, screentime.js
 ```
 
 ### 3.2 Data flow

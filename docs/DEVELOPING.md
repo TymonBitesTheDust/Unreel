@@ -53,7 +53,7 @@ The iPhone version of the Expo app (Screen Time lock plus a Safari extension) ne
 
 ## The Safari script and iPhone pages
 
-- `targets/safari/assets/content.js`, `content.css` and `rules.json` are the source. After changing them, raise `userscript.version` in `package.json` and run `npm run build:userscript`, or installed scripts won't update.
+- `targets/safari/assets/content.js`, `content.css`, `screentime.js` and `rules.json` are the source. After changing them, raise `userscript.version` in `package.json` and run `npm run build:userscript`, or installed scripts won't update.
 - `npm run test:userscript` checks the redirects; `npm run check:userscript` checks the generated script is up to date.
 - `.github/workflows/iphone.yml` runs both and publishes `iphone/` to GitHub Pages (Settings → Pages → Source: GitHub Actions). The README and setup guide link to `tymonbitesthedust.github.io/Unreel`; change them if the repository moves.
 

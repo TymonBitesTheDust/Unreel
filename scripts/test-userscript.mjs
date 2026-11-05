@@ -136,3 +136,100 @@ test('stops after two bounces from the same page and shows a notice', () => {
   // Ten seconds later it's a fresh visit again.
   assert.equal(load(href, { storage, now: 20_000 }).target, '/watch?v=abc123');
 });
+
+// ---- Screen time (screentime.js) ----------------------------------------------------------------
+
+const screenCode = readFileSync(join(root, 'targets/safari/assets/screentime.js'), 'utf8');
+
+/** Objects made inside the vm have its own prototypes; compare plain copies. */
+const plain = (value) => JSON.parse(JSON.stringify(value));
+
+/** The pure parts of screentime.js, as its test hook exposes them. */
+function screenTime() {
+  const context = { __UNREEL_TEST__: true, location: { hostname: 'www.youtube.com' }, Date, JSON, Object, Math, String };
+  context.globalThis = context;
+  vm.runInNewContext(screenCode, context);
+  return context.__unreelScreenTime;
+}
+
+test('screen time sorts YouTube pages like the Android app', () => {
+  const { partOf } = screenTime();
+  const cases = [
+    ['/', false, 'other'],
+    ['/results', false, 'other'],
+    ['/feed/subscriptions', false, 'other'],
+    ['/@mkbhd/videos', false, 'other'],
+    ['/watch', false, 'video'],
+    ['/live/abc123', false, 'video'],
+    ['/', true, 'video'], // The miniplayer: a video playing with sound counts wherever you are.
+    ['/shorts/abc123', false, 'shorts'],
+    ['/shorts', false, 'shorts'],
+  ];
+  for (const [path, playing, part] of cases) assert.equal(partOf('youtube', path, playing), part, `${path} playing=${playing}`);
+});
+
+test('screen time sorts Instagram pages like the Android app', () => {
+  const { partOf } = screenTime();
+  const cases = [
+    ['/', 'normal'],
+    ['/p/Cabc12345/', 'normal'],
+    ['/reel/Cabc12345/', 'normal'], // One Reel, not the feed.
+    ['/stories/natgeo/3456789/', 'normal'],
+    ['/reels/', 'scrolling'],
+    ['/reels/audio/123/', 'scrolling'],
+    ['/direct/inbox/', 'chat'],
+    ['/direct/t/123456/', 'chat'],
+    ['/explore/', 'other'],
+    ['/natgeo/', 'other'],
+    ['/accounts/edit/', 'other'],
+  ];
+  for (const [path, part] of cases) assert.equal(partOf('instagram', path, false), part, path);
+});
+
+test('screen time parts match the Android app, in the same order', () => {
+  const { SITES, siteOf } = screenTime();
+  const kotlin = readFileSync(join(root, 'modules/unreel-blocker/android/src/main/java/expo/modules/unreelblocker/data/ScreenTimeStore.kt'), 'utf8');
+  for (const site of ['youtube', 'instagram']) {
+    const ids = [...new RegExp(`"${site}" to listOf\\(([^)]*)\\)`).exec(kotlin)[1].matchAll(/"(\w+)"/g)].map((m) => m[1]);
+    assert.deepEqual(plain(SITES[site].parts.map(([id]) => id)), ids, site);
+  }
+  assert.equal(siteOf('m.youtube.com'), 'youtube');
+  assert.equal(siteOf('www.instagram.com'), 'instagram');
+  assert.equal(siteOf('notyoutube.com'), null);
+});
+
+test('screen time adds up per day, keeps 60 days and lists the last week', () => {
+  const { add, merge, prune, lastDays, dayKey, parse } = screenTime();
+  const now = new Date(2026, 10, 5, 15, 0).getTime();
+  const day = 24 * 60 * 60_000;
+  const store = parse(null);
+  add(store, now, 'video', 60_000);
+  add(store, now, 'video', 30_000);
+  add(store, now - day, 'other', 5_000);
+  add(store, now - 90 * day, 'video', 1_000);
+  merge(store, { days: { [dayKey(now)]: { shorts: 2_000 } } });
+  prune(store, now);
+
+  assert.deepEqual(plain(store.days[dayKey(now)]), { video: 90_000, shorts: 2_000 });
+  assert.equal(store.days[dayKey(now - 90 * day)], undefined, 'older than 60 days is dropped');
+  const week = lastDays(store, 7, now);
+  assert.equal(week.length, 7);
+  assert.equal(week[6].date, dayKey(now));
+  assert.deepEqual(plain(week[5].parts), { other: 5_000 });
+  assert.deepEqual(plain(week[0].parts), {});
+});
+
+test('screen time survives unreadable storage', () => {
+  const { parse } = screenTime();
+  for (const raw of [null, '', 'not json', '[]', '{"days":[]}', '{"days":null}']) assert.deepEqual(plain(parse(raw)), { days: {} }, String(raw));
+});
+
+test('screen time durations read the same as on Android', () => {
+  const { durationText } = screenTime();
+  const min = 60_000;
+  assert.equal(durationText(0), '0 min');
+  assert.equal(durationText(30_000), 'under 1 min');
+  assert.equal(durationText(45 * min), '45 min');
+  assert.equal(durationText(120 * min), '2 h');
+  assert.equal(durationText(72 * min), '1 h 12 min');
+});
