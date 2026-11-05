@@ -42,9 +42,11 @@ The YouTube and Instagram **apps** still have their feeds. Pick one:
 
 ## Android
 
-1. On your phone, download **Unreel.apk** from the [releases page](../../releases/latest) and open it. If Android asks, allow your browser or Files app to install apps.
+1. On your phone, download **Unreel.apk** from the [releases page](../../releases/latest) and open it. That one file is all you need; skip the "Source code" downloads under it. If Android asks, allow your browser or Files app to install apps.
 2. Open Unreel, tap **Set up Unreel**, then **Agree and open settings**, and switch Unreel on.
 3. Check it works: open YouTube and tap **Shorts**. You should land back on Home.
+
+**Updating from 1.0.0?** Uninstall Unreel 1.0.0 first, then install the new one. Version 1.1.0 is signed with a new key, so Android can't install it over 1.0.0. Uninstalling resets your counts and settings. Later updates install over 1.1.0 as normal.
 
 **Stuck?** If Play Protect blocks the install or the switch is greyed out, see **[Android help](docs/ANDROID-HELP.md)**.
 
@@ -67,7 +69,7 @@ What the Android app does:
 ## Privacy
 
 - **iPhone and computers:** the script runs only on youtube.com and instagram.com, inside your browser, and sends nothing anywhere.
-- **Android:** Accessibility access is the only special permission. Android sends Unreel events only from YouTube and Instagram; it reads the names of on-screen layout elements (such as whether the Reels tab is selected), not your messages or typing. The app has no internet permission, so nothing can leave your phone.
+- **Android:** Accessibility access is the only special permission. Android sends Unreel events only from YouTube and Instagram; it reads the names of on-screen layout elements (such as whether the Reels tab is selected), not your messages or typing. With time limits on, it also times how long Shorts and Reels stay open, and keeps that count on the phone. The app has no internet permission, so nothing can leave your phone.
 - No accounts, ads or analytics anywhere.
 
 ## Something not working?
