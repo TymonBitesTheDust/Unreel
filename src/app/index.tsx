@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { FrameStrip } from '../components/FrameStrip';
 import { PauseSheet } from '../components/PauseSheet';
 import { QuotaMeter } from '../components/QuotaMeter';
+import { ScreenTimeCard } from '../components/ScreenTimeCard';
 import { UnlockBanner } from '../components/UnlockBanner';
 import { Button, Group, Notice, Row, Screen, Segmented, SwitchRow } from '../components/ui';
 import { WeekChart } from '../components/WeekChart';
@@ -151,6 +152,8 @@ export default function Dashboard() {
           <WeekChart days={stats.days} />
         </Group>
       )}
+
+      {androidStatus && blocker.screenTime && <ScreenTimeCard screenTime={blocker.screenTime} />}
 
       {androidStatus && (
         <Group

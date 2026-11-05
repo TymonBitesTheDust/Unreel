@@ -55,6 +55,24 @@ export type QuotaStatus = {
   dayEndsAt: number;
 };
 
+/** (android) Milliseconds in each part of each app. Same category ids as the native rules. */
+export type ScreenTimeApps = {
+  youtube: { shorts: number; video: number; other: number };
+  instagram: { scrolling: number; normal: number; chat: number; other: number };
+};
+
+export type ScreenTimeDay = {
+  /** Local calendar day, yyyy-MM-dd. */
+  date: string;
+  apps: ScreenTimeApps;
+};
+
+export type ScreenTime = {
+  /** Oldest first, one entry per day including empty days. */
+  days: ScreenTimeDay[];
+  today: ScreenTimeDay;
+};
+
 export type BlockStats = {
   /** Oldest first, one entry per day including empty days. */
   days: DayStats[];

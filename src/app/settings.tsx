@@ -102,7 +102,7 @@ export default function Settings() {
         <Row
           title="Reset numbers"
           onPress={() =>
-            Alert.alert('Reset your numbers?', 'This clears every count. Blocking keeps working.', [
+            Alert.alert('Reset your numbers?', 'This clears every count and your screen time. Blocking keeps working.', [
               { text: 'Cancel', style: 'cancel' },
               {
                 text: 'Reset',
@@ -117,7 +117,7 @@ export default function Settings() {
         />
       </Group>
 
-      <Group title="Privacy" footer="Unreel has no account and no analytics. Block counts and settings never leave this device.">
+      <Group title="Privacy" footer="Unreel has no account and no analytics. Block counts, screen time and settings never leave this device.">
         <Row first title="Everything stays on this phone" />
       </Group>
     </Screen>

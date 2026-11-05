@@ -7,6 +7,7 @@ import type {
   NativeStatus,
   QuotaStatus,
   RulesInfo,
+  ScreenTime,
   SelectionSummary,
   UnreelBlockerEvents,
 } from './UnreelBlocker.types';
@@ -32,6 +33,8 @@ export declare class UnreelBlockerNativeModule extends NativeModule<UnreelBlocke
   resetRules?(): RulesInfo;
   /** (android) */
   getQuota?(): QuotaStatus;
+  /** (android) The last `days` days of screen time, oldest first. */
+  getScreenTime?(days: number): ScreenTime;
 
   /** (ios) */
   requestAuthorization?(): Promise<string>;

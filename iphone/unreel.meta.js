@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Unreel: no Shorts, no Reels
 // @namespace    unreel
-// @version      1.1.0
-// @description  Removes YouTube Shorts and Instagram Reels from the websites. A Short or Reel someone sends you opens as a normal video or post; the swipe feeds are gone.
+// @version      1.2.0
+// @description  Removes YouTube Shorts and Instagram Reels from the websites, and shows how long you spend on each part of them. A Short or Reel someone sends you opens as a normal video or post; the swipe feeds are gone.
 // @match        *://*.youtube.com/*
 // @match        *://*.instagram.com/*
 // @run-at       document-start

@@ -24,12 +24,15 @@ import expo.modules.unreelblocker.data.QuotaExhausted
 import expo.modules.unreelblocker.data.QuotaLimits
 import expo.modules.unreelblocker.data.QuotaStatus
 import expo.modules.unreelblocker.data.QuotaStore
+import expo.modules.unreelblocker.data.ScreenTimeStore
 import expo.modules.unreelblocker.data.StatsStore
+import expo.modules.unreelblocker.data.UsageMeter
 import expo.modules.unreelblocker.detection.AccessibilityUiTree
 import expo.modules.unreelblocker.detection.Detection
 import expo.modules.unreelblocker.detection.DetectionRules
 import expo.modules.unreelblocker.detection.EntryPoint
 import expo.modules.unreelblocker.detection.RulesRepository
+import expo.modules.unreelblocker.detection.ScreenClassifier
 import expo.modules.unreelblocker.detection.ShortFormDetector
 import expo.modules.unreelblocker.detection.UiTree
 import expo.modules.unreelblocker.intervention.BlockOverlay
@@ -53,12 +56,17 @@ import java.util.Date
  * [QUOTA_TICK_MS] so leaving the app or switching the screen off stops the count even though
  * those produce no events from the watched packages. Once the time is used up, blocking works
  * exactly as it does without limits.
+ *
+ * Screen time: whether or not blocking is on, every scan sorts the screen into a part of the app
+ * ([ScreenClassifier], at most once a second) and a [UsageMeter] turns that into time per part,
+ * saved in [ScreenTimeStore]. A re-check every [USAGE_TICK_MS] notices the app leaving the screen.
  */
 class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnSharedPreferenceChangeListener {
 
   private lateinit var prefs: BlockerPrefs
   private lateinit var stats: StatsStore
   private lateinit var quota: QuotaStore
+  private lateinit var screenTime: ScreenTimeStore
   private lateinit var power: PowerManager
   private lateinit var rulesRepository: RulesRepository
   private lateinit var navigator: FeedExitNavigator
@@ -67,6 +75,7 @@ class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnShar
   private lateinit var worker: Handler
 
   private val detector = ShortFormDetector()
+  private val classifier = ScreenClassifier(detector)
   private val mainHandler = Handler(Looper.getMainLooper())
 
   @Volatile private var config = BlockerConfig()
@@ -82,6 +91,13 @@ class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnShar
   private var watch: Watch? = null
   /** The day or hour (its end time) we last showed the "about a minute left" toast for. */
   private var warnedFor = 0L
+  private val usageMeter = UsageMeter()
+  private var lastClassifiedAt = 0L
+  /** A new screen opened since the last scan: classify it now rather than within the second. */
+  private var windowChanged = false
+  /** Screen time: a short-form player is on screen, and whether the user has swiped in it. */
+  private var playerOpen = false
+  private var swipedInPlayer = false
   private val diagnostics = ViewIdDiagnostics()
 
   /** A single reel/short the user opened from a DM or link, which we're letting them watch. */
@@ -111,6 +127,7 @@ class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnShar
     prefs = BlockerPrefs(this)
     stats = StatsStore(this)
     quota = QuotaStore(this)
+    screenTime = ScreenTimeStore(this)
     power = getSystemService(Context.POWER_SERVICE) as PowerManager
     rulesRepository = RulesRepository(this)
     navigator = FeedExitNavigator(this, detector)
@@ -147,7 +164,10 @@ class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnShar
     if (::prefs.isInitialized) prefs.unregisterListener(this)
     if (::overlay.isInitialized) overlay.hide()
     if (::workerThread.isInitialized) {
-      worker.post { stopWatching() } // Keep the time counted so far; quitSafely still runs it.
+      worker.post { // Keep the time counted so far; quitSafely still runs it.
+        stopWatching()
+        stopUsage()
+      }
       workerThread.quitSafely()
     }
     BlockEventBus.emitServiceState(false)
@@ -197,7 +217,7 @@ class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnShar
     val pkg = event.packageName?.toString() ?: return
     val currentRules = rules ?: return
     if (pkg !in currentRules.packageNames) return
-    if (!config.isActiveNow()) return
+    // No return when blocking is off or paused: screen time is recorded either way.
 
     val type = event.eventType
     // Needed to tell "swiped to the next reel" apart from "scrolled the comments".
@@ -221,6 +241,7 @@ class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnShar
 
     pendingPackage = pkg
     if (type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+      windowChanged = true
       worker.removeCallbacks(scanRunnable)
       scanQueued = true
       worker.post(scanRunnable)
@@ -240,22 +261,87 @@ class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnShar
   private fun scan(pkg: String) {
     val cfg = config
     val currentRules = rules ?: return
-    if (!cfg.isActiveNow()) {
+    val root = findRootFor(pkg) ?: return
+    val tree = AccessibilityUiTree(root)
+    val blocking = cfg.isActiveNow()
+    val detection = if (blocking) detector.detect(pkg, tree, currentRules) { cfg.isTargetEnabled(it.configKey) } else null
+    recordScreen(pkg, root, tree, currentRules, detection)
+
+    if (!blocking) {
       sharedSession = null
       stopWatching()
       return
     }
-    val root = findRootFor(pkg) ?: return
-    val tree = AccessibilityUiTree(root)
-    val detection = detector.detect(pkg, tree, currentRules) { cfg.isTargetEnabled(it.configKey) }
-
     if (detection == null) {
       sharedSession = null
       stopWatching()
-      if (debuggable) diagnostics.maybeLog(pkg, root)
+      // With screen-time rules, recordScreen logs the screens it can't place instead.
+      if (debuggable && currentRules.screenTimeFor(pkg) == null) diagnostics.maybeLog(pkg, root, "unmatched")
       return
     }
     onFeed(pkg, tree, detection, cfg)
+  }
+
+  // ---- Screen time (worker thread) -----------------------------------------------------------
+
+  /**
+   * Sorts the screen into a part of the app and records the time. Runs on every scan whether or
+   * not blocking is on, at most once a second unless a new screen just opened or another app
+   * took over. [blockingDetection] is reused when the scan already made one.
+   */
+  private fun recordScreen(
+    pkg: String,
+    root: AccessibilityNodeInfo,
+    tree: UiTree,
+    currentRules: DetectionRules,
+    blockingDetection: Detection?,
+    force: Boolean = false,
+  ) {
+    val app = currentRules.screenTimeFor(pkg) ?: return
+    val now = SystemClock.elapsedRealtime()
+    val newScreen = windowChanged
+    windowChanged = false
+    if (!force && !newScreen && usageMeter.pkg == pkg && now - lastClassifiedAt < CLASSIFY_EVERY_MS) return
+    lastClassifiedAt = now
+
+    // Every target, not only those being blocked: time is recorded either way.
+    val detection = blockingDetection ?: detector.detect(pkg, tree, currentRules) { true }
+    val inPlayer = detection?.entry == EntryPoint.PLAYER
+    if (!inPlayer) swipedInPlayer = false
+    playerOpen = inPlayer
+    val category = classifier.classify(app, tree, detection, swipedInPlayer)
+    if (debuggable && category == ScreenClassifier.OTHER) diagnostics.maybeLog(pkg, root, "other")
+
+    saveUsage(usageMeter.observe(pkg, app.app, category, now, System.currentTimeMillis()))
+    worker.removeCallbacks(usageTick)
+    worker.postDelayed(usageTick, USAGE_TICK_MS)
+  }
+
+  /**
+   * Every few seconds while YouTube or Instagram is on screen: is it still there? Leaving the app
+   * or switching the screen off sends no events from the watched apps, so without this the time
+   * would keep running.
+   */
+  private val usageTick = Runnable {
+    val pkg = usageMeter.pkg ?: return@Runnable
+    val currentRules = rules
+    val root = if (currentRules != null && power.isInteractive) findRootFor(pkg) else null
+    if (currentRules == null || root == null) {
+      stopUsage()
+      return@Runnable
+    }
+    recordScreen(pkg, root, AccessibilityUiTree(root), currentRules, blockingDetection = null, force = true)
+  }
+
+  private fun stopUsage() {
+    worker.removeCallbacks(usageTick)
+    saveUsage(usageMeter.stop(SystemClock.elapsedRealtime(), System.currentTimeMillis()))
+    playerOpen = false
+    swipedInPlayer = false
+  }
+
+  private fun saveUsage(slices: List<UsageMeter.Slice>) {
+    for (slice in slices) screenTime.add(slice)
   }
 
   /** The feed is on screen: let it play if a time limit allows it, otherwise step in. */
@@ -416,9 +502,14 @@ class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnShar
   }
 
   private fun noteScroll(pkg: String, sourceId: String?) {
+    if (sourceId == null) return
+    val currentRules = rules ?: return
+    // Screen time: only once the player has been seen, so the pager settling as it opens
+    // doesn't count as a swipe.
+    if (playerOpen && currentRules.targetsFor(pkg).any { sourceId in it.swipeViewIds }) swipedInPlayer = true
     val session = sharedSession ?: return
-    val rule = rules?.targetById(session.ruleId) ?: return
-    if (pkg in rule.packageNames && sourceId != null && sourceId in rule.swipeViewIds) {
+    val rule = currentRules.targetById(session.ruleId) ?: return
+    if (pkg in rule.packageNames && sourceId in rule.swipeViewIds) {
       session.swiped = true
     }
   }
@@ -513,6 +604,9 @@ class ShortFormBlockerService : AccessibilityService(), SharedPreferences.OnShar
     private const val MAX_COUNT_GAP_MS = 10_000L
     private const val SAVE_EVERY_MS = 10_000L
     private const val WARN_BEFORE_MS = 60_000L
+
+    private const val CLASSIFY_EVERY_MS = 1_000L
+    private const val USAGE_TICK_MS = 5_000L
 
     const val TRIGGER_TAB = "tab"
     const val TRIGGER_PLAYER = "player"

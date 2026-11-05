@@ -1,5 +1,6 @@
 package expo.modules.unreelblocker.detection
 
+import expo.modules.unreelblocker.data.SCREEN_CATEGORIES
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -41,10 +42,43 @@ data class TargetRule(
   val exitTab: TabMatcher,
 )
 
+/** Which short-form screens a [ScreenCategory] with a target matches. */
+enum class TargetEntry {
+  /** The feed tab or the player, however it was opened. */
+  ANY,
+  /** The feed tab, or a player the user has swiped in: endless scrolling. */
+  FEED,
+  /** A player opened from elsewhere (a DM, a post) and not swiped: one video. */
+  SINGLE,
+}
+
+/**
+ * One part of an app for the Screen time view, e.g. YouTube "video" or Instagram "chat".
+ * Matches if any of its signals does: the short-form [target] (by rule id, for [entry]), any
+ * visible [viewIds], or a selected [tab].
+ */
+data class ScreenCategory(
+  val id: String,
+  val target: String?,
+  val entry: TargetEntry,
+  val viewIds: List<String>,
+  val tab: TabMatcher,
+)
+
+/** How to sort time in one app into parts. Categories are tried in order; no match is "other". */
+data class ScreenTimeApp(
+  /** Stable short name used in stats: "youtube" | "instagram". */
+  val app: String,
+  val packageNames: List<String>,
+  val categories: List<ScreenCategory>,
+)
+
 data class DetectionRules(
   val schema: Int,
   val version: Long,
   val targets: List<TargetRule>,
+  /** Optional: rules without it still block; screen time then counts everything as "other". */
+  val screenTime: List<ScreenTimeApp> = emptyList(),
 ) {
   val packageNames: Set<String> = targets.flatMap { it.packageNames }.toSet()
 
@@ -52,6 +86,8 @@ data class DetectionRules(
     targets.filter { packageName in it.packageNames }
 
   fun targetById(id: String): TargetRule? = targets.firstOrNull { it.id == id }
+
+  fun screenTimeFor(packageName: String): ScreenTimeApp? = screenTime.firstOrNull { packageName in it.packageNames }
 
   companion object {
     const val SUPPORTED_SCHEMA = 1
@@ -79,7 +115,44 @@ data class DetectionRules(
       require(targets.isNotEmpty()) { "Rules must define at least one target" }
       require(targets.map { it.id }.toSet().size == targets.size) { "Target ids must be unique" }
 
-      return DetectionRules(schema, version, targets)
+      val screenJson = root.optJSONArray("screenTime")
+      val screenTime = if (screenJson == null) {
+        emptyList()
+      } else {
+        (0 until screenJson.length()).map { i -> parseScreenApp(screenJson.getJSONObject(i), targets.map { it.id }.toSet()) }
+      }
+
+      return DetectionRules(schema, version, targets, screenTime)
+    }
+
+    private fun parseScreenApp(o: JSONObject, targetIds: Set<String>): ScreenTimeApp {
+      val app = o.requireString("app")
+      val known = SCREEN_CATEGORIES[app] ?: throw IllegalArgumentException("Screen time: unknown app '$app'")
+      val packageNames = o.stringList("packageNames")
+      require(packageNames.isNotEmpty()) { "Screen time for '$app' has no packageNames" }
+      val list = o.optJSONArray("categories") ?: JSONArray()
+      val categories = (0 until list.length()).map { i ->
+        val c = list.getJSONObject(i)
+        val id = c.requireString("id")
+        require(id in known) { "Screen time for '$app': category '$id' isn't one of $known" }
+        val target = c.optString("target", "").ifBlank { null }
+        require(target == null || target in targetIds) { "Screen time for '$app': unknown target '$target'" }
+        val entry = when (val e = c.optString("entry", "any")) {
+          "any" -> TargetEntry.ANY
+          "feed" -> TargetEntry.FEED
+          "single" -> TargetEntry.SINGLE
+          else -> throw IllegalArgumentException("Screen time for '$app': unknown entry '$e'")
+        }
+        val category = ScreenCategory(id, target, entry, c.stringList("viewIds"), c.tabMatcher("tab"))
+        require(target != null || category.viewIds.isNotEmpty() || !category.tab.isEmpty) {
+          "Screen time for '$app': category '$id' has nothing to match"
+        }
+        (category.viewIds + category.tab.viewIds).forEach { viewId ->
+          require(":id/" in viewId) { "Screen time for '$app': '$viewId' must be a fully-qualified id (pkg:id/name)" }
+        }
+        category
+      }
+      return ScreenTimeApp(app, packageNames, categories)
     }
 
     private fun parseTarget(o: JSONObject): TargetRule {

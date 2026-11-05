@@ -11,6 +11,7 @@ import type {
   NativeStatus,
   QuotaStatus,
   RulesInfo,
+  ScreenTime,
   SelectionSummary,
 } from './src/UnreelBlocker.types';
 
@@ -102,6 +103,10 @@ export const android = {
   /** Time-limit use; null on iOS, where the feeds can't be timed. */
   getQuota(): QuotaStatus | null {
     return native().getQuota?.() ?? null;
+  },
+  /** Time in each part of YouTube and Instagram; null on iOS, which can't see inside the apps. */
+  getScreenTime(days = 7): ScreenTime | null {
+    return native().getScreenTime?.(days) ?? null;
   },
   status(status: NativeStatus | null): AndroidStatus | null {
     return status?.platform === 'android' ? status : null;

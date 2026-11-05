@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "version": 2026102401,
-  "notes": "Bundled detection rules. A newer copy can be pushed at runtime with UnreelBlocker.updateRules(json) so view-ID changes in YouTube/Instagram don't need an app release. IDs verified against public open-source blockers maintained through Sept 2026; re-verify with the debug 'dump view IDs' log after each target-app update. Tab labels are only a fallback (IDs come first) and are matched together with the selected state; add translations for your users' locales here.",
+  "version": 2026110501,
+  "notes": "Bundled detection rules. A newer copy can be pushed at runtime with UnreelBlocker.updateRules(json) so view-ID changes in YouTube/Instagram don't need an app release. IDs verified against public open-source blockers maintained through Sept 2026; re-verify with the debug 'dump view IDs' log after each target-app update. Tab labels are only a fallback (IDs come first) and are matched together with the selected state; add translations for your users' locales here. The screenTime section sorts time in each app into parts for the Screen time view: categories are tried in order, the first match wins, anything else is 'other'. A category matches a short-form target (entry 'any', 'feed' = the feed tab or a player the user has swiped in, 'single' = a player not swiped), any visible view ID, or a selected tab. The video, chat and post IDs there are best-known names not yet confirmed on a device: check them with the UnreelDiag log, which in debug builds lists the view IDs of every screen counted as 'other'.",
   "targets": [
     {
       "id": "youtube_shorts",
@@ -74,6 +74,83 @@
           "Home"
         ]
       }
+    }
+  ],
+  "screenTime": [
+    {
+      "app": "youtube",
+      "packageNames": [
+        "com.google.android.youtube"
+      ],
+      "categories": [
+        {
+          "id": "shorts",
+          "target": "youtube_shorts"
+        },
+        {
+          "id": "video",
+          "viewIds": [
+            "com.google.android.youtube:id/watch_player",
+            "com.google.android.youtube:id/youtube_controls_overlay",
+            "com.google.android.youtube:id/player_control_play_pause_replay_button"
+          ]
+        }
+      ]
+    },
+    {
+      "app": "instagram",
+      "packageNames": [
+        "com.instagram.android"
+      ],
+      "categories": [
+        {
+          "id": "scrolling",
+          "target": "instagram_reels",
+          "entry": "feed"
+        },
+        {
+          "id": "normal",
+          "target": "instagram_reels",
+          "entry": "single"
+        },
+        {
+          "id": "normal",
+          "viewIds": [
+            "com.instagram.android:id/reel_viewer_container",
+            "com.instagram.android:id/story_viewer_container"
+          ]
+        },
+        {
+          "id": "chat",
+          "viewIds": [
+            "com.instagram.android:id/row_thread_composer_edittext",
+            "com.instagram.android:id/message_list",
+            "com.instagram.android:id/inbox_refreshable_thread_list_recyclerview"
+          ],
+          "tab": {
+            "viewIds": [
+              "com.instagram.android:id/direct_tab"
+            ],
+            "labels": [
+              "Messages"
+            ]
+          }
+        },
+        {
+          "id": "normal",
+          "viewIds": [
+            "com.instagram.android:id/row_feed_photo_profile_name",
+            "com.instagram.android:id/row_feed_button_like",
+            "com.instagram.android:id/media_group"
+          ],
+          "tab": {
+            "viewIds": [
+              "com.instagram.android:id/feed_tab"
+            ],
+            "labels": []
+          }
+        }
+      ]
     }
   ]
 }

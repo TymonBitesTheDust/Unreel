@@ -48,12 +48,12 @@ The iPhone version of the Expo app (Screen Time lock plus a Safari extension) ne
 ## When detection breaks after an app update
 
 1. Run a debug build and open the screen that isn't caught.
-2. Run `adb logcat -s UnreelDiag`. It prints the view IDs on screens that nothing matched.
+2. Run `adb logcat -s UnreelDiag`. It prints the view IDs on screens that nothing matched, and on every screen that Screen time can only count as "other".
 3. Add the new ID to `unreel_rules.json` and raise `version`.
 
 ## The Safari script and iPhone pages
 
-- `targets/safari/assets/content.js`, `content.css` and `rules.json` are the source. After changing them, raise `userscript.version` in `package.json` and run `npm run build:userscript`, or installed scripts won't update.
+- `targets/safari/assets/content.js`, `content.css`, `screentime.js` and `rules.json` are the source. After changing them, raise `userscript.version` in `package.json` and run `npm run build:userscript`, or installed scripts won't update.
 - `npm run test:userscript` checks the redirects; `npm run check:userscript` checks the generated script is up to date.
 - `.github/workflows/iphone.yml` runs both and publishes `iphone/` to GitHub Pages (Settings → Pages → Source: GitHub Actions). The README and setup guide link to `tymonbitesthedust.github.io/Unreel`; change them if the repository moves.
 

@@ -11,6 +11,8 @@ type BlockerState = {
   stats: Blocker.BlockStats | null;
   /** Android: today's and this hour's use of the time limits. */
   quota: Blocker.QuotaStatus | null;
+  /** Android: the last 7 days of time in each part of YouTube and Instagram. */
+  screenTime: Blocker.ScreenTime | null;
   ready: boolean;
   /** Bumps on each live block event so the dashboard can animate the newest frame. */
   lastEvent: Blocker.BlockedEvent | null;
@@ -30,6 +32,7 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
   const [config, setConfigState] = useState<Blocker.BlockerConfig>(Blocker.DEFAULT_CONFIG);
   const [stats, setStats] = useState<Blocker.BlockStats | null>(null);
   const [quota, setQuota] = useState<Blocker.QuotaStatus | null>(null);
+  const [screenTime, setScreenTime] = useState<Blocker.ScreenTime | null>(null);
   const [lastEvent, setLastEvent] = useState<Blocker.BlockedEvent | null>(null);
   const [error, setError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
@@ -41,6 +44,7 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
       setConfigState(Blocker.getConfig());
       setStats(Blocker.getStats(STATS_DAYS));
       setQuota(Blocker.android.getQuota());
+      setScreenTime(Blocker.android.getScreenTime(STATS_DAYS));
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -100,13 +104,14 @@ export function BlockerProvider({ children }: { children: ReactNode }) {
       config,
       stats,
       quota,
+      screenTime,
       ready: status ? Blocker.isReady(status) : false,
       lastEvent,
       error,
       refresh,
       applyConfig,
     }),
-    [status, config, stats, quota, lastEvent, error, refresh, applyConfig],
+    [status, config, stats, quota, screenTime, lastEvent, error, refresh, applyConfig],
   );
 
   return <BlockerContext.Provider value={value}>{children}</BlockerContext.Provider>;

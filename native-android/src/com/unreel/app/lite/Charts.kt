@@ -165,3 +165,56 @@ class MeterView(context: Context, private val p: Palette) : View(context) {
     canvas.drawRoundRect(RectF(0f, 0f, max(h, width * fraction), h), r, r, paint)
   }
 }
+
+/**
+ * One whole split into parts: a thin segmented bar with no text. The rows beside it name each
+ * part and give its time, so it stays out of the accessibility tree. Fully rounded ends, a 2dp
+ * gap between parts, a part at zero draws nothing, and an empty whole shows just the track.
+ */
+class SegmentedBarView(context: Context, private val p: Palette) : View(context) {
+  /** (value, colour) in display order. */
+  var parts: List<Pair<Long, Int>> = emptyList()
+    set(value) {
+      field = value
+      invalidate()
+    }
+
+  private val density = resources.displayMetrics.density
+  private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+  private val clip = Path()
+
+  init {
+    importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+  }
+
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), (8 * density).toInt())
+  }
+
+  override fun onDraw(canvas: Canvas) {
+    val w = width.toFloat()
+    val h = height.toFloat()
+    val shown = parts.filter { it.first > 0 }
+    val total = shown.sumOf { it.first }
+    if (total <= 0L) {
+      paint.color = p.line
+      canvas.drawRoundRect(RectF(0f, 0f, w, h), h / 2, h / 2, paint)
+      return
+    }
+    val gap = 2 * density
+    val usable = w - gap * (shown.size - 1)
+    clip.reset()
+    clip.addRoundRect(RectF(0f, 0f, w, h), h / 2, h / 2, Path.Direction.CW)
+    canvas.save()
+    canvas.clipPath(clip)
+    var x = 0f
+    shown.forEachIndexed { i, (value, color) ->
+      // Even a sliver stays visible; the clip trims any overshoot at the far end.
+      val segment = max(2 * density, usable * value / total)
+      paint.color = color
+      canvas.drawRect(x, 0f, if (i == shown.lastIndex) w else x + segment, h, paint)
+      x += segment + gap
+    }
+    canvas.restore()
+  }
+}
